@@ -277,34 +277,3 @@ find_consensus_annotation_dsc = (
     "annotations. Note that the annotation hierarchy is assumed "
     "to have an even number of ranks."
 )
-
-# stats
-T = TypeMatch([SequencesWithQuality, PairedEndSequencesWithQuality])
-stats_inputs = {"sequences": SampleData[T]}
-stats_input_descriptions = {"sequences": "Sequences to be analyzed."}
-stats_dsc = "Quality control statistics of long-read sequencing data using NanoPlot."
-
-# trim
-trim_inputs = {"query": SampleData[T]}
-trim_outputs = [("filtered_query", SampleData[T])]
-trim_parameters = {
-    "n_threads": Int % Range(1, None),
-    "min_quality": Int % Range(0, None),
-    "max_quality": Int % Range(0, None),
-    "min_length": Int % Range(1, None),
-    "max_length": Int % Range(1, None),
-    "headcrop": Int % Range(0, None),
-    "tailcrop": Int % Range(0, None),
-}
-trim_input_descriptions = {"query": "Sequences to be trimmed."}
-trim_output_descriptions = {"filtered_query": "Trimmed sequences."}
-trim_parameter_descriptions = {
-    "n_threads": "Number of threads.",
-    "min_quality": "Sets a minimum Phred average quality score.",
-    "max_quality": "Sets a maximum Phred average quality score.",
-    "min_length": "Sets a minimum read length.",
-    "max_length": "Sets a maximum read length.",
-    "headcrop": "Trim N nucleotides from the start of a read.",
-    "tailcrop": "Trim N nucleotides from the end of a read.",
-}
-trim_dsc = "Trim long demultiplexed sequences using Chopper tool."

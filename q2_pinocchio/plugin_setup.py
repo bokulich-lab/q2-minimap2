@@ -56,16 +56,6 @@ from q2_pinocchio._action_params import (
     minimap2_search_outputs_dsc,
     minimap2_search_param_dsc,
     minimap2_search_params,
-    stats_dsc,
-    stats_input_descriptions,
-    stats_inputs,
-    trim_dsc,
-    trim_input_descriptions,
-    trim_inputs,
-    trim_output_descriptions,
-    trim_outputs,
-    trim_parameter_descriptions,
-    trim_parameters,
 )
 from q2_pinocchio.types._format import (
     Minimap2IndexDBDirFmt,
@@ -194,28 +184,8 @@ plugin.methods.register_function(
     description=find_consensus_annotation_dsc,
 )
 
-plugin.visualizers.register_function(
-    function=q2_pinocchio.stats,
-    inputs=stats_inputs,
-    parameters="",
-    input_descriptions=stats_input_descriptions,
-    parameter_descriptions={},
-    name="Quality control statistics for long-read sequencing data.",
-    description=stats_dsc,
-    citations=[citations["Nanopack2"]],
-)
 
-plugin.methods.register_function(
-    function=q2_pinocchio.trim,
-    inputs=trim_inputs,
-    outputs=trim_outputs,
-    parameters=trim_parameters,
-    input_descriptions=trim_input_descriptions,
-    output_descriptions=trim_output_descriptions,
-    parameter_descriptions=trim_parameter_descriptions,
-    name="Trim long-read sequencing data.",
-    description=trim_dsc,
-    citations=[citations["Nanopack2"]],
-)
+
+
 
 importlib.import_module("q2_pinocchio.types._transformer")

@@ -71,7 +71,6 @@ def process_sam_file(input_sam_file, keep, min_per_identity):
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp_file, open(
         input_sam_file, "r"
     ) as infile:
-
         for line in infile:
             # Writes header lines directly to the output file
             if line.startswith("@"):
@@ -105,9 +104,11 @@ def process_sam_file(input_sam_file, keep, min_per_identity):
                     min_per_identity and identity_percentage < min_per_identity
                 ):
                     tmp_file.write(line)
-
+    
     # Replaces the original SAM file with the filtered temporary file
     shutil.move(tmp_file.name, input_sam_file)
+             
+
 
 
 # Generate samtools fasta convert command

@@ -44,20 +44,11 @@ pip install .
     Assign taxonomy to query sequences using Minimap2. Performs alignment between query and reference reads, then assigns consensus taxonomy to each query sequence.
 
 
-6. **trim**
-
-    Trim long demultiplexed sequences using Chopper tool.
-
-
-7. **stats**
-
-    Quality control statistics of long-read sequencing data using NanoPlot.
 <br>
 
 
 
 ### Examples
-#### Download the input [datasets](https://polybox.ethz.ch/index.php/s/hnRGi1JkxG1nUmK)
 
 * build-index
   - Build Minimap2 index database
@@ -130,34 +121,3 @@ pip install .
   qiime pinocchio classify-consensus-minimap2 --i-query n1K_initial_reads_SILVA132.fna.qza --i-index ccm_index.qza --i-reference-taxonomy raw_taxonomy.qza --p-n-threads 8 --output-dir classification_output --verbose
   ```
 
-<br>
-
-* trim
-  - Filter based on the quality (min)
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-min-quality 7 --o-filtered-query filt_qual_min.qza --verbose
-  ```
-  - Filter based on the quality (max)
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-max-quality 7 --o-filtered-query filt_qual_max.qza --verbose
-  ```
-  - Headcrop of all sequences ()
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-headcrop 10 --o-filtered-query headcrop.qza --verbose
-  ```
-  - Filter based on the length of the sequences (min)
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-min-length 3000 --o-filtered-query filt_len_min.qza --verbose
-  ```
-
-<br>
-
-* stats
-  - Generate a visualization to display statistics about the sequences
-  ```shell
-  qiime pinocchio stats --i-sequences single-end-reads.qza --o-visualization stats.qzv
-  ```
- - To open:
-  ```shell
-  qiime tools view stats.qzv
-  ```
