@@ -1,24 +1,27 @@
-# q2-pinocchio: PaIrwise alignment of long-read NucleOtide sequence data for Classification and quality Control in HIgh-thrOughput
+# q2-pinocchio: Pairwise alignment of long-read NucleOtide sequence data for Classification and quality Control in HIgh-thrOughput
 
 ## QIIME 2 Plugin for quality control and taxonomic classification of long sequences
 
 
 ## Installation
-#### Step 1: Create q2-pinocchio environment
+We provide two options for installing q2-pinocchio via conda environment files, depending on your preferred QIIME2 distribution:
+
+
+#### 1: Tiny distribution
+Use the environment file `q2-pinocchio-qiime2-tiny-2025.10.yml` to create a new conda environment. This option installs qiime2-tiny as the base and enriches it with q2-feature-classifier from the amplicon conda channel.
+
+
 ```shell
-mamba create -n q2-pinocchio -c conda-forge -c bioconda -c https://packages.qiime2.org/qiime2/2024.10/metagenome/passed/ -c defaults q2cli q2-types q2-feature-classifier minimap2 bs4 samtools gzip chopper nanoplot
+conda env create -f q2-pinocchio-qiime2-tiny-2025.10.yml
+conda activate q2-pinocchio-tiny
 ```
 
-#### Step 2: Activate q2-pinocchio environment
+#### 2: Moshpit distributionv
+Use the environment file `q2-pinocchio-qiime2-moshpit-2025.10.yml` to create a new conda environment based on the moshpit distro. This environment is suitable if you want a full-featured QIIME2 setup with all standard plugins.
 ```shell
-conda activate q2-pinocchio
+conda env create -f q2-pinocchio-qiime2-tiny-2025.10.yml
+conda activate q2-pinocchio-tiny
 ```
-
-#### Step 3: Installing python package
-```shell
-pip install .
-```
-<br>
 
 ## Provided Actions
 

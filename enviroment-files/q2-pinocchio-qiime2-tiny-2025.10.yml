@@ -1,0 +1,11 @@
+name: q2-pinocchio-tiny
+channels:
+  - https://packages.qiime2.org/qiime2/2025.10/amplicon/released  # for q2-feature-classifier
+  - conda-forge
+  - bioconda
+dependencies:
+  - qiime2-tiny
+  - q2-feature-classifier=2025.10
+  - pip
+  - pip:
+      - q2-pinocchio@git+https://github.com/bokulich-lab/q2-pinocchio.git@main
