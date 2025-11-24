@@ -104,11 +104,9 @@ def process_sam_file(input_sam_file, keep, min_per_identity):
                     min_per_identity and identity_percentage < min_per_identity
                 ):
                     tmp_file.write(line)
-    
+
     # Replaces the original SAM file with the filtered temporary file
     shutil.move(tmp_file.name, input_sam_file)
-             
-
 
 
 # Generate samtools fasta convert command
@@ -174,13 +172,13 @@ def make_mn2_cmd(mapping_preset, index, n_threads, penalties, reads1, reads2, sa
 
 
 # Helper function for command execution
-def run_cmd(cmd, str):
+def run_cmd(cmd, tool_name):
     try:
         # Execute samtools fastq
         run_command(cmd)
     except subprocess.CalledProcessError as e:
         raise Exception(
-            f"An error was encountered while using {str}, "
+            f"An error was encountered while using {tool_name}, "
             f"(return code {e.returncode}), please inspect "
             "stdout and stderr to learn more."
         )

@@ -1,4 +1,4 @@
-# q2-pinocchio: Pairwise alignment of long-read NucleOtide sequence data for Classification and quality Control in HIgh-thrOughput
+# q2-pinocchio: Pairwise alignment of long-read NucleOtide sequence data for Classification and quality Control in High-thrOughput
 
 ## QIIME 2 Plugin for quality control and taxonomic classification of long sequences
 
