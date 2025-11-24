@@ -184,8 +184,4 @@ plugin.methods.register_function(
     description=find_consensus_annotation_dsc,
 )
 
-
-
-
-
 importlib.import_module("q2_pinocchio.types._transformer")
