@@ -16,15 +16,15 @@ requirements:
   - wheel
 
   run:
-    - qiime2 {{ qiime2_epoch }}.*
-    - q2-types {{ qiime2_epoch }}.*
-    - q2-feature-classifier {{ qiime2_epoch }}.*
-    - samtools
-    - minimap2
-    - beautifulsoup4
-    - nanoplot
-    - chopper
-    - gzip
+  - qiime2 {{ qiime2_epoch }}.*
+  - q2-types {{ qiime2_epoch }}.*
+  - q2-feature-classifier {{ qiime2_epoch }}.*
+  - samtools
+  - minimap2
+  - beautifulsoup4
+  - nanoplot
+  - chopper
+  - gzip
 
   build:
   - setuptools
@@ -33,12 +33,12 @@ requirements:
 
 test:
   requires:
-    - parameterized
+  - parameterized
   imports:
-    - q2_pinocchio
-    - qiime2.plugins.pinocchio
+  - q2_pinocchio
+  - qiime2.plugins.pinocchio
   commands:
-    - pytest --pyargs q2_pinocchio
+  - pytest --pyargs q2_pinocchio
 
 about:
   home: https://github.com/bokulich-lab/q2-pinocchio
