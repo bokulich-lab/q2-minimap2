@@ -7,20 +7,20 @@
 We provide two options for installing q2-pinocchio via conda environment files, depending on your preferred QIIME2 distribution:
 
 
-#### 1: Tiny distribution
-Use the environment file `q2-pinocchio-qiime2-tiny-2025.10.yml` to create a new conda environment. This option installs qiime2-tiny as the base and enriches it with q2-feature-classifier from the amplicon conda channel.
+#### 1: Amplicon distribution
+Use the environment file `q2-pinocchio-qiime2-amplicon-2025.10.yml` to create a new conda environment.
 
 
 ```shell
-conda env create -f q2-pinocchio-qiime2-tiny-2025.10.yml
-conda activate q2-pinocchio-tiny
+conda env create -f q2-pinocchio-qiime2-amplicon-2025.10.yml
+conda activate q2-pinocchio-amplicon
 ```
 
-#### 2: Moshpit distributionv
+#### 2: Moshpit distribution
 Use the environment file `q2-pinocchio-qiime2-moshpit-2025.10.yml` to create a new conda environment based on the moshpit distro. This environment is suitable if you want a full-featured QIIME2 setup with all standard plugins.
 ```shell
-conda env create -f q2-pinocchio-qiime2-tiny-2025.10.yml
-conda activate q2-pinocchio-tiny
+conda env create -f q2-pinocchio-qiime2-moshpit-2025.10.yml
+conda activate q2-pinocchio-moshpit
 ```
 
 ## Provided Actions
