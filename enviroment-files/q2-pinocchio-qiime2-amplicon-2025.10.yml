@@ -5,6 +5,7 @@ channels:
   - bioconda
 dependencies:
   - qiime2-amplicon
+  - minimap2
   - q2-feature-classifier=2025.10
   - pip
   - pip:
