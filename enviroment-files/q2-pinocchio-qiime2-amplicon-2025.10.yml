@@ -6,7 +6,9 @@ channels:
 dependencies:
   - qiime2-amplicon
   - minimap2
-  - q2-feature-classifier=2025.10
+  - samtools
+  - beautifulsoup4
+  - q2-feature-classifier
   - pip
   - pip:
-      - q2-pinocchio@git+https://github.com/bokulich-lab/q2-pinocchio.git@main
+      - q2-pinocchio@git+https://sgithub.com/bokulich-lab/q2-pinocchio.git@main
