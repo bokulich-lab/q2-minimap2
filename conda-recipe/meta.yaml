@@ -22,9 +22,6 @@ requirements:
   - samtools
   - minimap2
   - beautifulsoup4
-  - nanoplot
-  - chopper
-  - gzip
 
   build:
   - setuptools
