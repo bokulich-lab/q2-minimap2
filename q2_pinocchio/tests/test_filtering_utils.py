@@ -11,10 +11,9 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 from q2_pinocchio._filtering_utils import (
-    build_filtered_out_dir,
     calculate_identity,
     collate_sam_inplace,
     convert_to_fasta,
@@ -28,26 +27,6 @@ from q2_pinocchio._filtering_utils import (
 )
 
 from .test_pinocchio import PinocchioTestsBase
-
-
-class TestBuildFilteredOutDir(PinocchioTestsBase):
-    @patch("os.listdir")
-    @patch("shutil.copy")
-    def test_copy_files(self, mock_copy, mock_listdir):
-        # Set up
-        input_reads = type("test", (object,), {"path": "fake_input_path"})
-        filtered_seqs = type("test", (object,), {"path": "fake_filtered_path"})
-        mock_listdir.return_value = ["file1.txt", "file2.txt"]
-
-        # Invoke
-        build_filtered_out_dir(input_reads, filtered_seqs)
-
-        # Assert
-        expected_calls = [
-            call(os.path.join("fake_filtered_path", "file1.txt"), "fake_input_path"),
-            call(os.path.join("fake_filtered_path", "file2.txt"), "fake_input_path"),
-        ]
-        mock_copy.assert_has_calls(expected_calls, any_order=True)
 
 
 class TestSetPenalties(PinocchioTestsBase):

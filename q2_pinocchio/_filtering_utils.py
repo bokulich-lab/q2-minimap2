@@ -184,11 +184,6 @@ def run_cmd(cmd, tool_name):
         )
 
 
-def build_filtered_out_dir(input_reads, filtered_seqs):
-    for filename in os.listdir(filtered_seqs.path):
-        shutil.copy(os.path.join(filtered_seqs.path, filename), input_reads.path)
-
-
 def collate_sam_inplace(input_sam_path):
     # Temporary file prefix based on the input file name
     temp_prefix = os.path.splitext(input_sam_path)[0] + "_temp_collate"

@@ -21,7 +21,6 @@ requirements:
   - q2-feature-classifier >={{ q2_feature_classifier }}
   - samtools
   - minimap2
-  - beautifulsoup4
 
   build:
   - setuptools
