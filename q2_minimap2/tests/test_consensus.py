@@ -12,9 +12,9 @@ import pandas.testing as pdt
 from q2_types.feature_data import FeatureData, Sequence, Taxonomy
 from qiime2 import Artifact
 
-from q2_pinocchio.classify_consensus import _PAF_format_df_to_series_of_lists
+from q2_minimap2.classify_consensus import _PAF_format_df_to_series_of_lists
 
-from .test_pinocchio import PinocchioTestsBase
+from .test_minimap2 import MinimapTestsBase
 
 
 def series_is_subset(expected, observed):
@@ -23,7 +23,7 @@ def series_is_subset(expected, observed):
     return len(compared[compared]) >= len(compared[~compared])
 
 
-class TestConsensusAssignment(PinocchioTestsBase):
+class TestConsensusAssignment(MinimapTestsBase):
     def setUp(self):
         super().setUp()
 

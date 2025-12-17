@@ -13,7 +13,7 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-from q2_pinocchio._filtering_utils import (
+from q2_minimap2._filtering_utils import (
     calculate_identity,
     collate_sam_inplace,
     convert_to_fasta,
@@ -26,10 +26,10 @@ from q2_pinocchio._filtering_utils import (
     set_penalties,
 )
 
-from .test_pinocchio import PinocchioTestsBase
+from .test_minimap2 import MinimapTestsBase
 
 
-class TestSetPenalties(PinocchioTestsBase):
+class TestSetPenalties(MinimapTestsBase):
 
     # Test with all parameters provided to ensure correct option string formation
     def test_all_arguments_provided(self):
@@ -51,7 +51,7 @@ class TestSetPenalties(PinocchioTestsBase):
         self.assertEqual(set_penalties(None, None, None, None), [])
 
 
-class TestCalculateIdentity(PinocchioTestsBase):
+class TestCalculateIdentity(MinimapTestsBase):
     # Test case with NM tag present
     def test_with_nm_tag(self):
         aln = "SOME\tDATA\tNM:i:5"
@@ -132,7 +132,7 @@ class TestCalculateIdentity(PinocchioTestsBase):
         self.assertAlmostEqual(calculate_identity(aln, total_length), expected_identity)
 
 
-class TestGetAlignmentLength(PinocchioTestsBase):
+class TestGetAlignmentLength(MinimapTestsBase):
     # Test with the CIGAR string indicating no alignment
     def test_no_alignment(self):
         self.assertEqual(get_alignment_length("*"), 0)
@@ -204,7 +204,7 @@ class TestGetAlignmentLength(PinocchioTestsBase):
         )  # Assuming 'S' and 'H' are ignored for alignment length
 
 
-class TestProcessSamFile(PinocchioTestsBase):
+class TestProcessSamFile(MinimapTestsBase):
     def setUp(self):
         super().setUp()
 
@@ -326,7 +326,7 @@ class TestProcessSamFile(PinocchioTestsBase):
                     unmapped_index += 1
 
 
-class TestConvertToFasta(PinocchioTestsBase):
+class TestConvertToFasta(MinimapTestsBase):
     def test_convert_to_fasta(self):
         # Mock input parameters
         _reads = "read1.sam"
@@ -352,7 +352,7 @@ class TestConvertToFasta(PinocchioTestsBase):
         self.assertEqual(actual_cmd, expected_cmd)
 
 
-class TestConvertToFastq(PinocchioTestsBase):
+class TestConvertToFastq(MinimapTestsBase):
     def test_convert_to_fasta(self):
         # Mock input parameters
         _reads = "read1.sam"
@@ -377,7 +377,7 @@ class TestConvertToFastq(PinocchioTestsBase):
         self.assertEqual(actual_cmd, expected_cmd)
 
 
-class TestMakeMn2Cmd(PinocchioTestsBase):
+class TestMakeMn2Cmd(MinimapTestsBase):
     def test_make_mn2_cmd(self):
         # Mock input parameters
         mapping_preset = "map-preset"
@@ -416,7 +416,7 @@ class TestMakeMn2Cmd(PinocchioTestsBase):
         self.assertEqual(actual_cmd, expected_cmd)
 
 
-class TestConvertToFastqPaired(PinocchioTestsBase):
+class TestConvertToFastqPaired(MinimapTestsBase):
     def test_convert_to_fastq_paired(self):
         _reads = ["read1.qc", "read2.fq"]
         n_threads = 4
@@ -445,7 +445,7 @@ class TestConvertToFastqPaired(PinocchioTestsBase):
         )
 
 
-class TestMakeMn2PairedEndCmd(PinocchioTestsBase):
+class TestMakeMn2PairedEndCmd(MinimapTestsBase):
     def test_make_mn2_cmd_paired(self):
         mapping_preset = "map-preset"
         index = "/path/to/index"
@@ -483,7 +483,7 @@ class TestMakeMn2PairedEndCmd(PinocchioTestsBase):
         self.assertEqual(result_cmd, expected_cmd)
 
 
-class TestRunCmd(PinocchioTestsBase):
+class TestRunCmd(MinimapTestsBase):
     @patch("subprocess.run")
     def test_run_cmd_success(self, mock_run):
         cmd = "samtools fastq -o output.fastq input.sam"
@@ -515,8 +515,8 @@ class TestRunCmd(PinocchioTestsBase):
         self.assertEqual(str(context.exception), expected_message)
 
 
-class TestCollateSamInplace(PinocchioTestsBase):
-    @patch("q2_pinocchio._filtering_utils.run_cmd")
+class TestCollateSamInplace(MinimapTestsBase):
+    @patch("q2_minimap2._filtering_utils.run_cmd")
     @patch("shutil.move")
     def test_collate_sam_inplace(self, mock_shutil_move, mock_run_cmd):
         input_sam_path = "test_input.sam"
@@ -542,7 +542,7 @@ class TestCollateSamInplace(PinocchioTestsBase):
         mock_shutil_move.assert_called_once_with(output_sam_path, input_sam_path)
 
 
-class TestProcessPairedSamFlags(PinocchioTestsBase):
+class TestProcessPairedSamFlags(MinimapTestsBase):
     def setUp(self):
         # Create a temporary SAM file for testing
         self.temp_dir = tempfile.mkdtemp()

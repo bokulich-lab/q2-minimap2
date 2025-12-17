@@ -1,5 +1,5 @@
 [project]
-name = "q2-pinocchio"
+name = "q2-minimap2"
 authors = [
     { name = "Christos Matzoros", email = "christosmatzoros@gmail.com" }
 ]
@@ -9,11 +9,11 @@ license = {file = "LICENSE"}
 dynamic = ["version"]
 
 [project.urls]
-Homepage = "https://github.com/bokulich-lab/q2-pinocchio"
-Repository = "https://github.com/bokulich-lab/q2-pinocchio"
+Homepage = "https://github.com/bokulich-lab/q2-minimap2"
+Repository = "https://github.com/bokulich-lab/q2-minimap2"
 
 [project.entry-points.'qiime2.plugins']
-"q2-pinocchio" = "q2_pinocchio.plugin_setup:plugin"
+"q2-minimap2" = "q2_minimap2.plugin_setup:plugin"
 
 [build-system]
 requires = [
@@ -37,14 +37,14 @@ dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
 distance-dirty = "{base_version}+{distance}.{vcs}{rev}.dirty"
 
 [tool.versioningit.write]
-file = "q2_pinocchio/_version.py"
+file = "q2_minimap2/_version.py"
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["q2_pinocchio*"]
+include = ["q2_minimap2*"]
 
 [tool.setuptools.package-data]
-q2_pinocchio = ["**/*"]
+q2_minimap2 = ["**/*"]

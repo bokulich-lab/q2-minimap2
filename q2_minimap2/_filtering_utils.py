@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import tempfile
 
-from q2_pinocchio._utils import run_command
+from q2_minimap2._utils import run_command
 
 
 # Set Minimap2 alignment penalties based on provided parameters

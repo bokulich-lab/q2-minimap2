@@ -12,7 +12,7 @@ import tempfile
 from q2_types.feature_data import DNAFASTAFormat
 from q2_types.per_sample_sequences import CasavaOneEightSingleLanePerSampleDirFmt
 
-from q2_pinocchio._filtering_utils import (
+from q2_minimap2._filtering_utils import (
     collate_sam_inplace,
     convert_to_fastq,
     make_mn2_cmd,
@@ -21,7 +21,7 @@ from q2_pinocchio._filtering_utils import (
     run_cmd,
     set_penalties,
 )
-from q2_pinocchio.types._format import Minimap2IndexDBDirFmt
+from q2_minimap2.types._format import Minimap2IndexDBDirFmt
 
 
 # This function aligns reads to a reference using Minimap2,

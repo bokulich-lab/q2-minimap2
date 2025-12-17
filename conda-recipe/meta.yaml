@@ -1,5 +1,5 @@
 package:
-  name: q2-pinocchio
+  name: q2-minimap2
   version: {{ PLUGIN_VERSION }}
 
 source:
@@ -31,12 +31,12 @@ test:
   requires:
   - parameterized
   imports:
-  - q2_pinocchio
-  - qiime2.plugins.pinocchio
+  - q2_minimap2
+  - qiime2.plugins.minimap2
   commands:
-  - pytest --pyargs q2_pinocchio
+  - pytest --pyargs q2_minimap2
 
 about:
-  home: https://github.com/bokulich-lab/q2-pinocchio
+  home: https://github.com/bokulich-lab/q2-minimap2
   license: BSD-3-Clause
   license_family: BSD

@@ -1,4 +1,4 @@
-name: q2-pinocchio-amplicon
+name: q2-minimap2-amplicon
 channels:
   - https://packages.qiime2.org/qiime2/2025.10/amplicon/released  
   - conda-forge
@@ -11,4 +11,4 @@ dependencies:
   - q2-types
   - pip
   - pip:
-      - q2-pinocchio@git+https://github.com/bokulich-lab/q2-pinocchio.git@main
+      - q2-minimap2@git+https://github.com/bokulich-lab/q2-minimap2.git@main

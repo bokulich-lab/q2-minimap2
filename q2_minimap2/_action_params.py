@@ -14,7 +14,7 @@ from q2_types.per_sample_sequences import (
 from q2_types.sample_data import SampleData
 from qiime2.plugin import Bool, Choices, Float, Int, Range, Str, TypeMatch
 
-from q2_pinocchio.types._type import Minimap2IndexDB, PairwiseAlignmentMN2
+from q2_minimap2.types._type import Minimap2IndexDB, PairwiseAlignmentMN2
 
 T = TypeMatch([SequencesWithQuality, PairedEndSequencesWithQuality])
 
