@@ -71,7 +71,6 @@ def process_sam_file(input_sam_file, keep, min_per_identity):
     with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp_file, open(
         input_sam_file, "r"
     ) as infile:
-
         for line in infile:
             # Writes header lines directly to the output file
             if line.startswith("@"):
@@ -173,21 +172,16 @@ def make_mn2_cmd(mapping_preset, index, n_threads, penalties, reads1, reads2, sa
 
 
 # Helper function for command execution
-def run_cmd(cmd, str):
+def run_cmd(cmd, tool_name):
     try:
         # Execute samtools fastq
         run_command(cmd)
     except subprocess.CalledProcessError as e:
         raise Exception(
-            f"An error was encountered while using {str}, "
+            f"An error was encountered while using {tool_name}, "
             f"(return code {e.returncode}), please inspect "
             "stdout and stderr to learn more."
         )
-
-
-def build_filtered_out_dir(input_reads, filtered_seqs):
-    for filename in os.listdir(filtered_seqs.path):
-        shutil.copy(os.path.join(filtered_seqs.path, filename), input_reads.path)
 
 
 def collate_sam_inplace(input_sam_path):

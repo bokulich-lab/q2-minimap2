@@ -1,24 +1,27 @@
-# q2-pinocchio: PaIrwise alignment of long-read NucleOtide sequence data for Classification and quality Control in HIgh-thrOughput
+# q2-pinocchio: Pairwise alignment of long-read NucleOtide sequence data for Classification and quality Control in High-thrOughput
 
 ## QIIME 2 Plugin for quality control and taxonomic classification of long sequences
 
 
 ## Installation
-#### Step 1: Create q2-pinocchio environment
+We provide two options for installing q2-pinocchio via conda environment files, depending on your preferred QIIME2 distribution:
+
+
+#### 1: Amplicon distribution
+Use the environment file `q2-pinocchio-qiime2-amplicon-2025.10.yml` to create a new conda environment.
+
 ```shell
-mamba create -n q2-pinocchio -c conda-forge -c bioconda -c https://packages.qiime2.org/qiime2/2024.10/metagenome/passed/ -c defaults q2cli q2-types q2-feature-classifier minimap2 bs4 samtools gzip chopper nanoplot
+conda env create -f q2-pinocchio-qiime2-amplicon-2025.10.yml
+conda activate q2-pinocchio-amplicon
 ```
 
-#### Step 2: Activate q2-pinocchio environment
-```shell
-conda activate q2-pinocchio
-```
+#### 2: Moshpit distribution
+Use the environment file `q2-pinocchio-qiime2-moshpit-2025.10.yml` to create a new conda environment based on the MOSHPIT distro. 
 
-#### Step 3: Installing python package
 ```shell
-pip install .
+conda env create -f q2-pinocchio-qiime2-moshpit-2025.10.yml
+conda activate q2-pinocchio-moshpit
 ```
-<br>
 
 ## Provided Actions
 
@@ -44,20 +47,11 @@ pip install .
     Assign taxonomy to query sequences using Minimap2. Performs alignment between query and reference reads, then assigns consensus taxonomy to each query sequence.
 
 
-6. **trim**
-
-    Trim long demultiplexed sequences using Chopper tool.
-
-
-7. **stats**
-
-    Quality control statistics of long-read sequencing data using NanoPlot.
 <br>
 
 
 
 ### Examples
-#### Download the input [datasets](https://polybox.ethz.ch/index.php/s/hnRGi1JkxG1nUmK)
 
 * build-index
   - Build Minimap2 index database
@@ -130,34 +124,3 @@ pip install .
   qiime pinocchio classify-consensus-minimap2 --i-query n1K_initial_reads_SILVA132.fna.qza --i-index ccm_index.qza --i-reference-taxonomy raw_taxonomy.qza --p-n-threads 8 --output-dir classification_output --verbose
   ```
 
-<br>
-
-* trim
-  - Filter based on the quality (min)
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-min-quality 7 --o-filtered-query filt_qual_min.qza --verbose
-  ```
-  - Filter based on the quality (max)
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-max-quality 7 --o-filtered-query filt_qual_max.qza --verbose
-  ```
-  - Headcrop of all sequences ()
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-headcrop 10 --o-filtered-query headcrop.qza --verbose
-  ```
-  - Filter based on the length of the sequences (min)
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-min-length 3000 --o-filtered-query filt_len_min.qza --verbose
-  ```
-
-<br>
-
-* stats
-  - Generate a visualization to display statistics about the sequences
-  ```shell
-  qiime pinocchio stats --i-sequences single-end-reads.qza --o-visualization stats.qzv
-  ```
- - To open:
-  ```shell
-  qiime tools view stats.qzv
-  ```

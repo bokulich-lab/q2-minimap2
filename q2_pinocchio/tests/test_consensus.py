@@ -19,7 +19,7 @@ from .test_pinocchio import PinocchioTestsBase
 
 def series_is_subset(expected, observed):
     joined = pd.concat([expected, observed], axis=1, join="inner")
-    compared = joined.apply(lambda x: x[0].startswith(x[1]), axis=1)
+    compared = joined.apply(lambda x: x.iloc[0].startswith(x.iloc[1]), axis=1)
     return len(compared[compared]) >= len(compared[~compared])
 
 
@@ -73,6 +73,7 @@ class TestConsensusAssignment(PinocchioTestsBase):
     ):
         paf = self.paf.view(pd.DataFrame)
         taxonomy = self.taxonomy.view(pd.Series)
+        paf = paf.astype(object)
         paf.loc[3] = ["junk", "", "", "", "", "lost-id"] + [""] * 17
         with self.assertRaisesRegex(KeyError, "results do not match.*lost-id"):
             _PAF_format_df_to_series_of_lists(paf, taxonomy)
