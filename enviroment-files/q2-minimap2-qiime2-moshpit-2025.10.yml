@@ -1,4 +1,3 @@
-name: q2-minimap2-moshpit
 channels:
 - https://packages.qiime2.org/qiime2/2025.10/moshpit/released
 - conda-forge
@@ -11,4 +10,4 @@ dependencies:
   - q2-types
   - pip
   - pip:
-      - q2-minimap2@git+https://github.com/bokulich-lab/q2-minimap2.git@main
+      - -e .
