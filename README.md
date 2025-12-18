@@ -1,7 +1,10 @@
-# q2-minimap2: Pairwise alignment of long-read NucleOtide sequence data for Classification and quality Control in High-thrOughput
+# q2-minimap2
 
-## QIIME 2 Plugin for quality control and taxonomic classification of long sequences
+![CI](https://github.com/bokulich-lab/q2-minimap2/actions/workflows/ci.yaml/badge.svg)
+[![codecov](https://codecov.io/gh/bokulich-lab/q2-minimap2/graph/badge.svg?token=PSCAYJUP01)](https://codecov.io/gh/bokulich-lab/q2-minimap2)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+QIIME 2 plugin for sequence alignment using minimap2.
 
 ## Installation
 We provide two options for installing q2-minimap2 via conda environment files, depending on your preferred QIIME2 distribution:

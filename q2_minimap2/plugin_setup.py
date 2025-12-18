@@ -72,8 +72,7 @@ plugin = Plugin(
     version=__version__,
     website="https://github.com/bokulich-lab/q2-minimap2",
     package="q2_minimap2",
-    description="Plugin for quality control and taxonomic "
-    "classification of long-read sequencing data.",
+    description="Plugin for sequence alignment using minimap2.",
     short_description="",
 )
 
