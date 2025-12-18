@@ -10,4 +10,4 @@ dependencies:
   - q2-types
   - pip
   - pip:
-      - git+https://github.com/bokulich-lab/q2-minimap2.git
+    - q2-minimap2@git+https://github.com/bokulich-lab/q2-minimap2.git@main
