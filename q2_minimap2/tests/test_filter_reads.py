@@ -14,10 +14,10 @@ import unittest
 from q2_types.feature_data import DNAFASTAFormat
 from q2_types.per_sample_sequences import CasavaOneEightSingleLanePerSampleDirFmt
 
-from q2_pinocchio.filter_reads import filter_reads
-from q2_pinocchio.types._format import Minimap2IndexDBDirFmt
+from q2_minimap2.filter_reads import filter_reads
+from q2_minimap2.types._format import Minimap2IndexDBDirFmt
 
-from .test_pinocchio import PinocchioTestsBase
+from .test_minimap2 import MinimapTestsBase
 
 seq_ids_mapped = [
     "SARS2:6:73:941:1973#",
@@ -38,7 +38,7 @@ perc_id_mapped = [
 perc_id_unmapped = ["SARS2:6:73:941:1973#", "SARS2:6:73:356:9806#"]
 
 
-class TestFilterSingleEndReads(PinocchioTestsBase):
+class TestFilterSingleEndReads(MinimapTestsBase):
     def setUp(self):
         super().setUp()
 

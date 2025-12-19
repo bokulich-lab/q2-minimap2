@@ -101,8 +101,8 @@ def classify_consensus_minimap2(
 ):
     # Retrieve the necessary actions from the context to perform
     # sequence mapping and consensus annotation
-    search_db = ctx.get_action("pinocchio", "minimap2_search")
-    lca = ctx.get_action("pinocchio", "_find_consensus_annotation")
+    search_db = ctx.get_action("minimap2", "minimap2_search")
+    lca = ctx.get_action("minimap2", "_find_consensus_annotation")
 
     # Execute the search against a reference database or reads using Minimap2,
     # adhering to specified parameters like maxaccepts and perc_identity

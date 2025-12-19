@@ -9,8 +9,8 @@
 import pandas as pd
 from q2_types.feature_data import DNAFASTAFormat
 
-from q2_pinocchio._filtering_utils import run_cmd
-from q2_pinocchio.types._format import Minimap2IndexDBDirFmt, PairwiseAlignmentMN2Format
+from q2_minimap2._filtering_utils import run_cmd
+from q2_minimap2.types._format import Minimap2IndexDBDirFmt, PairwiseAlignmentMN2Format
 
 
 # Filter a PAF file to keep only a certain number of entries

@@ -9,8 +9,8 @@
 from qiime2.plugin.testing import TestPluginBase
 
 
-class PinocchioTestsBase(TestPluginBase):
-    package = "q2_pinocchio.tests"
+class MinimapTestsBase(TestPluginBase):
+    package = "q2_minimap2.tests"
 
     def setUp(self):
         super().setUp()

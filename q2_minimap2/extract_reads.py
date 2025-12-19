@@ -10,14 +10,14 @@ import tempfile
 
 from q2_types.feature_data import DNAFASTAFormat
 
-from q2_pinocchio._filtering_utils import (
+from q2_minimap2._filtering_utils import (
     convert_to_fasta,
     make_mn2_cmd,
     process_sam_file,
     run_cmd,
     set_penalties,
 )
-from q2_pinocchio.types._format import Minimap2IndexDBDirFmt
+from q2_minimap2.types._format import Minimap2IndexDBDirFmt
 
 
 # This function uses Minimap2 to align reads to a reference, filters the

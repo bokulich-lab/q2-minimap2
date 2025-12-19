@@ -10,8 +10,8 @@ import subprocess
 
 from q2_types.feature_data import DNAFASTAFormat
 
-from q2_pinocchio._utils import run_command
-from q2_pinocchio.types._format import Minimap2IndexDBDirFmt
+from q2_minimap2._utils import run_command
+from q2_minimap2.types._format import Minimap2IndexDBDirFmt
 
 
 def create_idx_build_cmd(database, sequences, preset):

@@ -11,9 +11,9 @@ import importlib
 from q2_types.feature_data import FeatureData
 from qiime2.plugin import Citations, Plugin
 
-import q2_pinocchio
-from q2_pinocchio import __version__
-from q2_pinocchio._action_params import (
+import q2_minimap2
+from q2_minimap2 import __version__
+from q2_minimap2._action_params import (
     build_index_dsc,
     build_index_inputs,
     build_index_inputs_dsc,
@@ -57,23 +57,22 @@ from q2_pinocchio._action_params import (
     minimap2_search_param_dsc,
     minimap2_search_params,
 )
-from q2_pinocchio.types._format import (
+from q2_minimap2.types._format import (
     Minimap2IndexDBDirFmt,
     Minimap2IndexDBFmt,
     PairwiseAlignmentMN2DirectoryFormat,
     PairwiseAlignmentMN2Format,
 )
-from q2_pinocchio.types._type import Minimap2IndexDB, PairwiseAlignmentMN2
+from q2_minimap2.types._type import Minimap2IndexDB, PairwiseAlignmentMN2
 
-citations = Citations.load("citations.bib", package="q2_pinocchio")
+citations = Citations.load("citations.bib", package="q2_minimap2")
 
 plugin = Plugin(
-    name="pinocchio",
+    name="minimap2",
     version=__version__,
-    website="https://github.com/bokulich-lab/q2-pinocchio",
-    package="q2_pinocchio",
-    description="Plugin for quality control and taxonomic "
-    "classification of long-read sequencing data.",
+    website="https://github.com/bokulich-lab/q2-minimap2",
+    package="q2_minimap2",
+    description="Plugin for sequence alignment using minimap2.",
     short_description="",
 )
 
@@ -108,7 +107,7 @@ plugin.register_artifact_class(
 )
 
 plugin.methods.register_function(
-    function=q2_pinocchio.extract_reads,
+    function=q2_minimap2.extract_reads,
     inputs=extract_reads_inputs,
     parameters=extract_reads_params,
     outputs=extract_reads_outputs,
@@ -121,7 +120,7 @@ plugin.methods.register_function(
 )
 
 plugin.methods.register_function(
-    function=q2_pinocchio.filter_reads,
+    function=q2_minimap2.filter_reads,
     inputs=filter_reads_inputs,
     parameters=filter_reads_params,
     outputs=filter_reads_outputs,
@@ -134,7 +133,7 @@ plugin.methods.register_function(
 )
 
 plugin.methods.register_function(
-    function=q2_pinocchio.build_index,
+    function=q2_minimap2.build_index,
     inputs=build_index_inputs,
     parameters=build_index_params,
     outputs=build_index_outputs,
@@ -147,7 +146,7 @@ plugin.methods.register_function(
 )
 
 plugin.methods.register_function(
-    function=q2_pinocchio.minimap2_search,
+    function=q2_minimap2.minimap2_search,
     inputs=minimap2_search_inputs,
     parameters=minimap2_search_params,
     outputs=minimap2_search_outputs,
@@ -160,7 +159,7 @@ plugin.methods.register_function(
 )
 
 plugin.pipelines.register_function(
-    function=q2_pinocchio.classify_consensus_minimap2,
+    function=q2_minimap2.classify_consensus_minimap2,
     inputs=classify_consensus_minimap2_inputs,
     parameters=classify_consensus_minimap2_params,
     outputs=classify_consensus_minimap2_outputs,
@@ -173,7 +172,7 @@ plugin.pipelines.register_function(
 )
 
 plugin.methods.register_function(
-    function=q2_pinocchio._find_consensus_annotation,
+    function=q2_minimap2._find_consensus_annotation,
     inputs=find_consensus_annotation_inputs,
     parameters=find_consensus_annotation_params,
     outputs=find_consensus_annotation_outputs,
@@ -184,4 +183,4 @@ plugin.methods.register_function(
     description=find_consensus_annotation_dsc,
 )
 
-importlib.import_module("q2_pinocchio.types._transformer")
+importlib.import_module("q2_minimap2.types._transformer")
