@@ -1,4 +1,4 @@
-.PHONY: all lint test test-cov install dev clean distclean
+.PHONY: all lint test test-cov test-docker install dev clean distclean
 
 PYTHON ?= python
 
