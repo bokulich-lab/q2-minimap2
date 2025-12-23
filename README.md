@@ -1,24 +1,30 @@
-# q2-pinocchio: PaIrwise alignment of long-read NucleOtide sequence data for Classification and quality Control in HIgh-thrOughput
+# q2-minimap2
 
-## QIIME 2 Plugin for quality control and taxonomic classification of long sequences
+![CI](https://github.com/bokulich-lab/q2-minimap2/actions/workflows/ci.yaml/badge.svg)
+[![codecov](https://codecov.io/gh/bokulich-lab/q2-minimap2/graph/badge.svg?token=PSCAYJUP01)](https://codecov.io/gh/bokulich-lab/q2-minimap2)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+QIIME 2 plugin for sequence alignment using minimap2.
 
 ## Installation
-#### Step 1: Create q2-pinocchio environment
+We provide two options for installing q2-minimap2 via conda environment files, depending on your preferred QIIME2 distribution:
+
+
+#### 1: Amplicon distribution
+Use the environment file `q2-minimap2-qiime2-amplicon-2025.10.yml` to create a new conda environment.
+
 ```shell
-mamba create -n q2-pinocchio -c conda-forge -c bioconda -c https://packages.qiime2.org/qiime2/2024.10/metagenome/passed/ -c defaults q2cli q2-types q2-feature-classifier minimap2 bs4 samtools gzip chopper nanoplot
+conda env create -f q2-minimap2-qiime2-amplicon-2025.10.yml
+conda activate q2-minimap2-amplicon
 ```
 
-#### Step 2: Activate q2-pinocchio environment
-```shell
-conda activate q2-pinocchio
-```
+#### 2: Moshpit distribution
+Use the environment file `q2-minimap2-qiime2-moshpit-2025.10.yml` to create a new conda environment based on the MOSHPIT distro. 
 
-#### Step 3: Installing python package
 ```shell
-pip install .
+conda env create -f q2-minimap2-qiime2-moshpit-2025.10.yml
+conda activate q2-minimap2-moshpit
 ```
-<br>
 
 ## Provided Actions
 
@@ -44,25 +50,16 @@ pip install .
     Assign taxonomy to query sequences using Minimap2. Performs alignment between query and reference reads, then assigns consensus taxonomy to each query sequence.
 
 
-6. **trim**
-
-    Trim long demultiplexed sequences using Chopper tool.
-
-
-7. **stats**
-
-    Quality control statistics of long-read sequencing data using NanoPlot.
 <br>
 
 
 
 ### Examples
-#### Download the input [datasets](https://polybox.ethz.ch/index.php/s/hnRGi1JkxG1nUmK)
 
 * build-index
   - Build Minimap2 index database
   ```shell
-  qiime pinocchio build-index --i-reference reference.qza --o-index index.qza --verbose
+  qiime minimap2 build-index --i-reference reference.qza --o-index index.qza --verbose
   ```
 
 <br>
@@ -70,17 +67,17 @@ pip install .
 * minimap2-search
   - Generate both hits and no hits for each query. Keep a maximum of one hit per query (primary).
   ```shell
-  qiime pinocchio minimap2-search --i-query fasta_reads.qza --i-index index.qza --o-search-results paf.qza --verbose
+  qiime minimap2 minimap2-search --i-query fasta_reads.qza --i-index index.qza --o-search-results paf.qza --verbose
   ```
 
   - Generate only hits for each query. Keep a maximum of one hit per query (primary mappings).
   ```shell
-  qiime pinocchio minimap2-search --i-query fasta_reads.qza --i-index index.qza --o-search-results paf_only_hits.qza --p-output-no-hits false --verbose
+  qiime minimap2 minimap2-search --i-query fasta_reads.qza --i-index index.qza --o-search-results paf_only_hits.qza --p-output-no-hits false --verbose
   ```
 
   - Generate only hits for each query, limiting the number of hits to a maximum of 3 per query. Ensure that each hit has a minimum similarity percentage of 90% to be considered valid.
   ```shell
-  qiime pinocchio minimap2-search --i-query fasta_reads.qza --i-index index.qza --o-search-results paf_only_hits_ma3.qza --p-maxaccepts 3 --p-output-no-hits false --verbose
+  qiime minimap2 minimap2-search --i-query fasta_reads.qza --i-index index.qza --o-search-results paf_only_hits_ma3.qza --p-maxaccepts 3 --p-output-no-hits false --verbose
   ```
 
 <br>
@@ -88,22 +85,22 @@ pip install .
 * filter-reads
   - Keep mapped (single-end reads)
   ```shell
-  qiime pinocchio filter-reads --i-query single-end-reads.qza --i-index index.qza --o-filtered-query mapped_se.qza --verbose
+  qiime minimap2 filter-reads --i-query single-end-reads.qza --i-index index.qza --o-filtered-query mapped_se.qza --verbose
   ```
 
   - Keep unmapped (single-end reads)
   ```shell
-  qiime pinocchio filter-reads --i-query single-end-reads.qza --i-index index.qza --p-keep unmapped --o-filtered-query unmapped_se.qza --verbose
+  qiime minimap2 filter-reads --i-query single-end-reads.qza --i-index index.qza --p-keep unmapped --o-filtered-query unmapped_se.qza --verbose
   ```
 
   - Keep mapped (paired-end reads)
   ```shell
-  qiime pinocchio filter-reads --i-query paired-end-reads.qza --i-index index.qza --o-filtered-query mapped_pe.qza --verbose
+  qiime minimap2 filter-reads --i-query paired-end-reads.qza --i-index index.qza --o-filtered-query mapped_pe.qza --verbose
   ```
 
   - Keep mapped reads with mapping percentage >= 98% (paired-end reads)
   ```shell
-  qiime pinocchio filter-reads --i-query paired-end-reads.qza --i-index index.qza --p-min-per-identity 0.98  --o-filtered-query mapped_pe_over_98p_id.qza --verbose
+  qiime minimap2 filter-reads --i-query paired-end-reads.qza --i-index index.qza --p-min-per-identity 0.98  --o-filtered-query mapped_pe_over_98p_id.qza --verbose
   ```
 
 <br>
@@ -111,15 +108,15 @@ pip install .
 * extract-reads
   - Extract mapped
   ```shell
-  qiime pinocchio extract-reads --i-sequences fasta_reads.qza --i-index index.qza --o-extracted-reads mapped_fasta.qza --verbose
+  qiime minimap2 extract-reads --i-sequences fasta_reads.qza --i-index index.qza --o-extracted-reads mapped_fasta.qza --verbose
   ```
   - Extract unmapped
   ```shell
-  qiime pinocchio extract-reads --i-sequences fasta_reads.qza --i-index index.qza --p-extract unmapped --o-extracted-reads unmapped_fasta.qza --verbose
+  qiime minimap2 extract-reads --i-sequences fasta_reads.qza --i-index index.qza --p-extract unmapped --o-extracted-reads unmapped_fasta.qza --verbose
   ```
   - Extract mapped reads with mapping percentage >= 87%
   ```shell
-  qiime pinocchio extract-reads --i-sequences fasta_reads.qza --i-index index.qza --p-min-per-identity 0.87 --o-extracted-reads mapped_fasta_ido_ver_87.qza --verbose
+  qiime minimap2 extract-reads --i-sequences fasta_reads.qza --i-index index.qza --p-min-per-identity 0.87 --o-extracted-reads mapped_fasta_ido_ver_87.qza --verbose
   ```
 
 <br>
@@ -127,37 +124,6 @@ pip install .
 * classify-consensus-minimap2
   - Assign taxonomy to query sequences using Minimap2
   ```shell
-  qiime pinocchio classify-consensus-minimap2 --i-query n1K_initial_reads_SILVA132.fna.qza --i-index ccm_index.qza --i-reference-taxonomy raw_taxonomy.qza --p-n-threads 8 --output-dir classification_output --verbose
+  qiime minimap2 classify-consensus-minimap2 --i-query n1K_initial_reads_SILVA132.fna.qza --i-index ccm_index.qza --i-reference-taxonomy raw_taxonomy.qza --p-n-threads 8 --output-dir classification_output --verbose
   ```
 
-<br>
-
-* trim
-  - Filter based on the quality (min)
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-min-quality 7 --o-filtered-query filt_qual_min.qza --verbose
-  ```
-  - Filter based on the quality (max)
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-max-quality 7 --o-filtered-query filt_qual_max.qza --verbose
-  ```
-  - Headcrop of all sequences ()
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-headcrop 10 --o-filtered-query headcrop.qza --verbose
-  ```
-  - Filter based on the length of the sequences (min)
-  ```shell
-  qiime pinocchio trim --i-query single-end-reads.qza --p-min-length 3000 --o-filtered-query filt_len_min.qza --verbose
-  ```
-
-<br>
-
-* stats
-  - Generate a visualization to display statistics about the sequences
-  ```shell
-  qiime pinocchio stats --i-sequences single-end-reads.qza --o-visualization stats.qzv
-  ```
- - To open:
-  ```shell
-  qiime tools view stats.qzv
-  ```

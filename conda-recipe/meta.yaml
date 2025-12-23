@@ -1,0 +1,42 @@
+package:
+  name: q2-minimap2
+  version: {{ PLUGIN_VERSION }}
+
+source:
+  path: ..
+
+build:
+  script: make install
+
+requirements:
+  host:
+  - python {{ python }}
+  - setuptools
+  - versioningit
+  - wheel
+
+  run:
+  - qiime2 >={{ qiime2 }}
+  - q2-types >={{ q2_types }}
+  - q2-feature-classifier >={{ q2_feature_classifier }}
+  - samtools
+  - minimap2
+
+  build:
+  - setuptools
+  - versioningit
+  - python {{ python }}
+
+test:
+  requires:
+  - parameterized
+  imports:
+  - q2_minimap2
+  - qiime2.plugins.minimap2
+  commands:
+  - pytest --pyargs q2_minimap2
+
+about:
+  home: https://github.com/bokulich-lab/q2-minimap2
+  license: BSD-3-Clause
+  license_family: BSD

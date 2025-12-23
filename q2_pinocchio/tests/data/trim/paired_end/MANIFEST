@@ -1,5 +1,0 @@
-sample-id,filename,direction
-SRR10138345,SRR10138345_00_L001_R1_001.fastq.gz,forward
-SRR10138345,SRR10138345_00_L001_R2_001.fastq.gz,reverse
-SRR10138346,SRR10138346_00_L001_R1_001.fastq.gz,forward
-SRR10138346,SRR10138346_00_L001_R2_001.fastq.gz,reverse

@@ -1,4 +1,4 @@
-.PHONY: all lint test test-cov install dev clean distclean
+.PHONY: all lint test test-cov test-docker install dev clean distclean
 
 PYTHON ?= python
 
@@ -12,16 +12,13 @@ test: all
 	py.test
 
 test-cov: all
-	coverage run -m pytest
-	coverage xml
+	python -m coverage run -m pytest && coverage xml -o coverage.xml
 
 install: all
-	$(PYTHON) setup.py install
+	$(PYTHON) -m pip install -v .
 
 dev: all
-	pip install pre-commit
 	pip install -e .
-	pre-commit install
 
 clean: distclean
 
