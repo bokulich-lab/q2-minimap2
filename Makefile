@@ -14,6 +14,10 @@ test: all
 test-cov: all
 	python -m coverage run -m pytest && coverage xml -o coverage.xml
 
+test-docker: all
+	qiime info
+	qiime minimap2 --help
+
 install: all
 	$(PYTHON) -m pip install -v .
 
