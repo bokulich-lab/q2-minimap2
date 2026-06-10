@@ -68,7 +68,7 @@ class TestFilterSingleEndReads(MinimapTestsBase):
                 obs_fh.seek(0)
                 # Iterate over expected and observed reads, side-by-side
                 for records in itertools.zip_longest(*[obs_fh] * 4):
-                    (obs_seq_h, obs_seq, _, obs_qual) = records
+                    obs_seq_h, obs_seq, _, obs_qual = records
                     # Make sure seqs that map to genome were removed
                     obs_id = obs_seq_h.strip("@/012\n")
                     self.assertTrue(obs_id in included_ids)
