@@ -12,5 +12,5 @@ jobs:
   ci:
     uses: bokulich-lab/utilities/.github/workflows/ci.yaml@main
     with:
-      distro: moshpit
+      distro: qiime2
       build_docker: true

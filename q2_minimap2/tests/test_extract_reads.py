@@ -56,7 +56,7 @@ class TestExtractreads(MinimapTestsBase):
             self.assertNotEqual(len(obs_fh.readlines()), 0)
             obs_fh.seek(0)
             for records in itertools.zip_longest(*[obs_fh] * 4):
-                (obs_seq_h, obs_seq, _, obs_qual) = records
+                obs_seq_h, obs_seq, _, obs_qual = records
                 obs_id = obs_seq_h.strip(">/012\n")
                 self.assertTrue(obs_id in included_ids)
                 self.assertTrue(obs_id not in excluded_ids)

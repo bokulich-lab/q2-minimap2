@@ -35,7 +35,7 @@ class TestConsensusAssignment(MinimapTestsBase):
         self.paf = Artifact.load(self.get_data_path("consensus/search_results.qza"))
 
     def test_classify_consensus_minimap2(self):
-        (paf, taxonomy) = self.plugin.pipelines["classify_consensus_minimap2"](
+        paf, taxonomy = self.plugin.pipelines["classify_consensus_minimap2"](
             query=self.reads,
             reference=self.reads,
             reference_taxonomy=self.taxonomy,
