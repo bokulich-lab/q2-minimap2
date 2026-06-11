@@ -1,0 +1,13 @@
+channels:
+- https://packages.qiime2.org/qiime2/2026.4/moshpit/released
+- https://packages.qiime2.org/qiime2/2026.4/qiime2/released
+- conda-forge
+- bioconda
+dependencies:
+  - rachis-moshpit
+  - minimap2
+  - samtools
+  - q2-feature-classifier
+  - pip
+  - pip:
+    - q2-minimap2@git+https://github.com/bokulich-lab/q2-minimap2.git@2026.4.0
