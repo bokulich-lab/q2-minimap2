@@ -3,6 +3,7 @@ channels:
 - https://packages.qiime2.org/qiime2/2026.7/qiime2/released
 - conda-forge
 - bioconda
+- defaults
 dependencies:
   - rachis-tiny
   - minimap2
