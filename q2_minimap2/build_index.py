@@ -42,9 +42,9 @@ def build_index(
         run_command(build_cmd)
     except subprocess.CalledProcessError as e:
         raise Exception(
-            "An error was encountered while running main.nf, "
-            f"(return code {e.returncode}), please inspect "
-            "stdout and stderr to learn more."
+            "An error was encountered while using Minimap2, "
+            f"(return code {e.returncode}), please re-run with --verbose "
+            "to see the Minimap2 stdout and stderr."
         )
 
     return database

@@ -1,5 +1,6 @@
+name: q2-minimap2-amplicon-2026.1
 channels:
-- https://packages.qiime2.org/qiime2/2026.1/amplicon/released  
+- https://packages.qiime2.org/qiime2/2026.1/amplicon/released
 - conda-forge
 - bioconda
 dependencies:

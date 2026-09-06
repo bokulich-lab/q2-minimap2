@@ -1,3 +1,4 @@
+name: q2-minimap2-moshpit-2026.4
 channels:
 - https://packages.qiime2.org/qiime2/2026.4/moshpit/released
 - https://packages.qiime2.org/qiime2/2026.4/qiime2/released

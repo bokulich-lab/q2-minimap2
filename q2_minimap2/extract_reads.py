@@ -66,8 +66,8 @@ def extract_reads(
 
     if reference and index:
         raise ValueError(
-            "Only one reference_reads or index_database artifact "
-            "can be provided as input. Choose one and try again."
+            "Only one of reference or index can be provided as input. "
+            "Choose one and try again."
         )
 
     # Initialize directory format for filtered sequences
@@ -79,9 +79,7 @@ def extract_reads(
     elif reference:
         idx_ref_path = str(reference.path)
     else:
-        raise ValueError(
-            "Either reference_reads or a minimap2_index must be provided as input."
-        )
+        raise ValueError("Either reference or index must be provided as input.")
 
     penalties = set_penalties(
         matching_score, mismatching_penalty, gap_open_penalty, gap_extension_penalty

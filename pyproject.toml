@@ -48,3 +48,9 @@ include = ["q2_minimap2*"]
 
 [tool.setuptools.package-data]
 q2_minimap2 = ["**/*"]
+
+# The conda recipe runs `pytest --pyargs q2_minimap2`, so the test data has to
+# ship, but compiled bytecode must not: it is builder-specific and makes the
+# package non-reproducible.
+[tool.setuptools.exclude-package-data]
+q2_minimap2 = ["**/__pycache__/*", "**/*.pyc"]
