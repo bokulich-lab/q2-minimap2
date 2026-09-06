@@ -95,7 +95,7 @@ def classify_consensus_minimap2(
     output_no_hits=True,  # Include queries with no hits in the output
     min_consensus=0.51,  # Threshold for consensus in classification
     unassignable_label="Unassigned",  # Label for unclassifiable queries
-    n_threads=3,  # Number of threads for the alignment process
+    n_threads=1,  # Number of threads for the alignment process
 ):
     # Retrieve the necessary actions from the context to perform
     # sequence mapping and consensus annotation

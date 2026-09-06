@@ -14,6 +14,18 @@ from qiime2.plugin import Citations, Plugin
 import q2_minimap2
 from q2_minimap2 import __version__
 from q2_minimap2._action_params import (
+    align_dsc,
+    align_inputs,
+    align_inputs_dsc,
+    align_outputs,
+    align_outputs_dsc,
+    align_param_dsc,
+    align_params,
+    alignment_stats_dsc,
+    alignment_stats_inputs,
+    alignment_stats_inputs_dsc,
+    alignment_stats_outputs,
+    alignment_stats_outputs_dsc,
     build_index_dsc,
     build_index_inputs,
     build_index_inputs_dsc,
@@ -156,6 +168,32 @@ plugin.methods.register_function(
     name="Minimap2 alignment search.",
     description=minimap2_search_dsc,
     citations=[citations["Minimap2"], citations["li2009sequence"]],
+)
+
+plugin.methods.register_function(
+    function=q2_minimap2.align,
+    inputs=align_inputs,
+    parameters=align_params,
+    outputs=align_outputs,
+    input_descriptions=align_inputs_dsc,
+    parameter_descriptions=align_param_dsc,
+    output_descriptions=align_outputs_dsc,
+    name="Align reads to a reference and keep the alignment.",
+    description=align_dsc,
+    citations=[citations["Minimap2"], citations["li2009sequence"]],
+)
+
+plugin.methods.register_function(
+    function=q2_minimap2.alignment_stats,
+    inputs=alignment_stats_inputs,
+    parameters={},
+    outputs=alignment_stats_outputs,
+    input_descriptions=alignment_stats_inputs_dsc,
+    parameter_descriptions={},
+    output_descriptions=alignment_stats_outputs_dsc,
+    name="Summarize Minimap2 alignments.",
+    description=alignment_stats_dsc,
+    citations=[citations["li2009sequence"]],
 )
 
 plugin.pipelines.register_function(

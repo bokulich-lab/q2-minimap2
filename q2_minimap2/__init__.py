@@ -6,6 +6,8 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+from .align import align
+from .alignment_stats import alignment_stats
 from .build_index import build_index
 from .classify_consensus import _find_consensus_annotation, classify_consensus_minimap2
 from .extract_reads import extract_reads
@@ -18,6 +20,8 @@ except ModuleNotFoundError:
     __version__ = "0.0.0+notfound"
 
 __all__ = [
+    "align",
+    "alignment_stats",
     "filter_reads",
     "build_index",
     "minimap2_search",

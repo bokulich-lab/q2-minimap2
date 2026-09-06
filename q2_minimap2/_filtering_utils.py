@@ -23,6 +23,24 @@ SECONDARY = 0x100
 SUPPLEMENTARY = 0x800
 
 
+# Resolve the single path Minimap2 should map against. The actions accept a
+# prebuilt index or raw reference sequences, but never both and never neither.
+def get_index_or_reference_path(index, reference):
+    if reference and index:
+        raise ValueError(
+            "Only one of reference or index can be provided as input. "
+            "Choose one and try again."
+        )
+
+    if index:
+        return str(index.path / "index.mmi")
+
+    if reference:
+        return str(reference.path)
+
+    raise ValueError("Either reference or index must be provided as input.")
+
+
 # Set Minimap2 alignment penalties based on provided parameters
 def set_penalties(
     matching_score, mismatching_penalty, gap_open_penalty, gap_extension_penalty
@@ -76,6 +94,10 @@ def get_alignment_length(cigar):
 
 # Function to process a SAM file, filter based on mappings and identity percentage
 def process_sam_file(input_sam_file, keep, min_per_identity):
+    # Counted while the records are being visited anyway, so that callers can
+    # report how much of the input survived without re-reading anything
+    total, retained = 0, 0
+
     # Creates a temporary file and opens the input SAM file for reading simultaneously
     tmp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
     try:
@@ -106,6 +128,8 @@ def process_sam_file(input_sam_file, keep, min_per_identity):
                 if flag & SECONDARY or flag & SUPPLEMENTARY:
                     continue
 
+                total += 1
+
                 # Logic for including or excluding reads based on mappings and
                 # identity percentage
                 if keep == "mapped":
@@ -115,6 +139,7 @@ def process_sam_file(input_sam_file, keep, min_per_identity):
                             or identity_percentage >= min_per_identity
                         ):
                             tmp_file.write(line)
+                            retained += 1
                 else:
                     # Condition for keeping unmapped reads or mapped reads below the
                     # identity threshold
@@ -122,6 +147,7 @@ def process_sam_file(input_sam_file, keep, min_per_identity):
                         min_per_identity and identity_percentage < min_per_identity
                     ):
                         tmp_file.write(line)
+                        retained += 1
 
         # Replaces the original SAM file with the filtered temporary file
         shutil.move(tmp_file.name, input_sam_file)
@@ -131,6 +157,8 @@ def process_sam_file(input_sam_file, keep, min_per_identity):
         # the input itself
         if os.path.exists(tmp_file.name):
             os.remove(tmp_file.name)
+
+    return total, retained
 
 
 # Generate samtools fasta convert command
@@ -287,11 +315,13 @@ def order_mates(group):
 # nothing left for the samtools fastq command to pair it with.
 def write_mate_pair(temp_file, group):
     if len(group) != 2:
-        return
+        return 0
 
     read1, read2 = set_pair_flags(*order_mates(group))
     temp_file.write("\t".join(read1) + "\n")
     temp_file.write("\t".join(read2) + "\n")
+
+    return 2
 
 
 def process_paired_sam_flags(input_sam_path):
@@ -304,6 +334,8 @@ def process_paired_sam_flags(input_sam_path):
     pairing correct when filtering has removed one mate, or when a read produced more
     than the two records the pair consists of.
     """
+    written = 0
+
     temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
     try:
         with temp_file, open(input_sam_path, "r") as infile:
@@ -324,15 +356,17 @@ def process_paired_sam_flags(input_sam_path):
                     continue
 
                 if read[0] != group_name:
-                    write_mate_pair(temp_file, group)
+                    written += write_mate_pair(temp_file, group)
                     group, group_name = [], read[0]
 
                 group.append(read)
 
-            write_mate_pair(temp_file, group)
+            written += write_mate_pair(temp_file, group)
 
         shutil.move(temp_file.name, input_sam_path)
     finally:
         # Do not leave a full copy of the SAM behind if this fails part-way
         if os.path.exists(temp_file.name):
             os.remove(temp_file.name)
+
+    return written

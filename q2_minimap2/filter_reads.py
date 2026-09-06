@@ -9,8 +9,11 @@
 import os
 import tempfile
 
+import pandas as pd
+import qiime2
 from q2_types.feature_data import DNAFASTAFormat
 from q2_types.per_sample_sequences import CasavaOneEightSingleLanePerSampleDirFmt
+from qiime2.plugin import get_available_cores
 
 from q2_minimap2._filtering_utils import (
     collate_sam_inplace,
@@ -56,13 +59,15 @@ def _minimap2_filter_reads(
         run_cmd(mn2_cmd, "Minimap2")
 
         # Filter the SAM file using samtools based on the include/exclude criteria
-        process_sam_file(sam_f.name, keep, min_per_identity)
+        total, retained = process_sam_file(sam_f.name, keep, min_per_identity)
 
         if reads2:
             # Ensuring proper read grouping of paired reads
             collate_sam_inplace(sam_f.name)
-            # Making flags suitable for samtools fastq command
-            process_paired_sam_flags(sam_f.name)
+            # Making flags suitable for samtools fastq command. A mate whose
+            # partner was filtered out is dropped here, so the count of records
+            # that survived the identity filter would overstate the output.
+            retained = process_paired_sam_flags(sam_f.name)
 
             # Construct and execute command to convert SAM to FASTQ
             # using samtools fastq, directing output to the specified output directory
@@ -82,12 +87,14 @@ def _minimap2_filter_reads(
 
         run_cmd(convert_to_fastq_cmd, "samtools fastq")
 
+    return total, retained
+
 
 def filter_reads(
     query: CasavaOneEightSingleLanePerSampleDirFmt,
     index: Minimap2IndexDBDirFmt = None,  # Optional pre-built Minimap2 index
     reference: DNAFASTAFormat = None,  # Optional reference sequences
-    n_threads: int = 3,  # Number of threads for Minimap2
+    n_threads: int = 1,  # Number of threads for Minimap2
     preset: str = "map-ont",  # Minimap2 mapping preset
     keep: str = "mapped",  # Keep 'mapped' or 'unmapped' reads
     min_per_identity: float = None,  # Minimum percentage identity to keep a read
@@ -95,7 +102,7 @@ def filter_reads(
     mismatching_penalty: int = None,  # Penalty for mismatched bases
     gap_open_penalty: int = None,  # Penalty for opening a gap
     gap_extension_penalty: int = None,  # Penalty for extending a gap
-) -> CasavaOneEightSingleLanePerSampleDirFmt:
+) -> (CasavaOneEightSingleLanePerSampleDirFmt, qiime2.Metadata):
 
     # Ensure that only one of reference or index is provided
     if reference and index:
@@ -107,6 +114,10 @@ def filter_reads(
     # Ensure that at least one of reference and index is provided
     if not reference and not index:
         raise ValueError("Either reference or index must be provided as input.")
+
+    # A thread count of 0 is what the Threads type passes on for "auto"
+    if n_threads == 0:
+        n_threads = get_available_cores()
 
     # Determine the reference path from the provided index or reference
     if index:
@@ -123,8 +134,9 @@ def filter_reads(
     )
 
     # Process each read, filtering according to the specified parameters
-    for _, fwd, rev in query.manifest.itertuples():
-        _minimap2_filter_reads(
+    stats = {}
+    for sample_id, fwd, rev in query.manifest.itertuples():
+        total, retained = _minimap2_filter_reads(
             fwd,
             rev,
             filtered_seqs,
@@ -135,5 +147,14 @@ def filter_reads(
             min_per_identity,
             penalties,
         )
+        stats[sample_id] = {
+            "input_reads": total,
+            "retained_reads": retained,
+            "removed_reads": total - retained,
+            "percent_retained": (100 * retained / total) if total else 0.0,
+        }
 
-    return filtered_seqs
+    filter_stats = pd.DataFrame.from_dict(stats, orient="index").astype(float)
+    filter_stats.index.name = "sample-id"
+
+    return filtered_seqs, qiime2.Metadata(filter_stats)

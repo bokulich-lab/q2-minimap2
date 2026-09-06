@@ -11,6 +11,7 @@ import itertools
 import os
 import unittest
 
+import qiime2
 from q2_types.feature_data import DNAFASTAFormat
 from q2_types.per_sample_sequences import CasavaOneEightSingleLanePerSampleDirFmt
 
@@ -75,7 +76,7 @@ class TestFilterSingleEndReads(MinimapTestsBase):
                     self.assertTrue(obs_id not in excluded_ids)
 
     def test_filter_single_end_keep_unmapped(self):
-        obs_seqs = filter_reads(
+        obs_seqs, _ = filter_reads(
             query=self.query_single_reads,
             index=self.minimap2_index,
             keep="unmapped",
@@ -84,14 +85,14 @@ class TestFilterSingleEndReads(MinimapTestsBase):
         self._check_ids(obs_seqs, seq_ids_unmapped, seq_ids_mapped)
 
     def test_filter_single_end_keep_mapped(self):
-        obs_seqs = filter_reads(
+        obs_seqs, _ = filter_reads(
             query=self.query_single_reads,
             index=self.minimap2_index,
         )
         self._check_ids(obs_seqs, seq_ids_mapped, seq_ids_unmapped)
 
     def test_filter_single_end_keep_mapped_sr(self):
-        obs_seqs = filter_reads(
+        obs_seqs, _ = filter_reads(
             query=self.query_single_reads,
             index=self.minimap2_index,
             preset="sr",
@@ -99,14 +100,14 @@ class TestFilterSingleEndReads(MinimapTestsBase):
         self._check_ids(obs_seqs, seq_ids_mapped, seq_ids_unmapped)
 
     def test_filter_single_end_keep_mapped_using_ref(self):
-        obs_seqs = filter_reads(
+        obs_seqs, _ = filter_reads(
             query=self.query_single_reads,
             reference=self.reference_reads,
         )
         self._check_ids(obs_seqs, seq_ids_mapped, seq_ids_unmapped)
 
     def test_filter_single_end_keep_unmapped_with_perc_id(self):
-        obs_seqs = filter_reads(
+        obs_seqs, _ = filter_reads(
             query=self.query_single_reads,
             index=self.minimap2_index,
             keep="unmapped",
@@ -115,7 +116,7 @@ class TestFilterSingleEndReads(MinimapTestsBase):
         self._check_ids(obs_seqs, perc_id_unmapped, perc_id_mapped)
 
     def test_filter_single_end_keep_mapped_with_perc_id(self):
-        obs_seqs = filter_reads(
+        obs_seqs, _ = filter_reads(
             query=self.query_single_reads,
             index=self.minimap2_index,
             keep="mapped",
@@ -148,7 +149,7 @@ class TestFilterSingleEndReads(MinimapTestsBase):
         )
 
     def test_filter_paired_end_keep_unmapped(self):
-        obs_seqs = filter_reads(
+        obs_seqs, _ = filter_reads(
             query=self.query_paired_reads,
             index=self.minimap2_index,
             keep="unmapped",
@@ -156,11 +157,92 @@ class TestFilterSingleEndReads(MinimapTestsBase):
         self._check_ids(obs_seqs, seq_ids_unmapped, seq_ids_mapped)
 
     def test_filter_paired_end_keep_mapped(self):
-        obs_seqs = filter_reads(
+        obs_seqs, _ = filter_reads(
             query=self.query_paired_reads,
             index=self.minimap2_index,
         )
         self._check_ids(obs_seqs, seq_ids_mapped, seq_ids_unmapped)
+
+
+class TestFilterStats(MinimapTestsBase):
+    def setUp(self):
+        super().setUp()
+        self.query_single_reads = CasavaOneEightSingleLanePerSampleDirFmt(
+            self.get_data_path("filter_reads/single_end/"), mode="r"
+        )
+        self.minimap2_index = Minimap2IndexDBDirFmt(
+            self.get_data_path("filter_reads/index/"), mode="r"
+        )
+
+    def test_stats_reported_for_every_sample(self):
+        _, stats = filter_reads(
+            query=self.query_single_reads, index=self.minimap2_index
+        )
+
+        self.assertIsInstance(stats, qiime2.Metadata)
+        self.assertEqual(
+            set(stats.to_dataframe().index), {"sample_a", "sample_b", "sample_c"}
+        )
+
+    def test_kept_and_removed_account_for_the_input(self):
+        _, stats = filter_reads(
+            query=self.query_single_reads, index=self.minimap2_index
+        )
+
+        for _, row in stats.to_dataframe().iterrows():
+            self.assertEqual(
+                row["retained_reads"] + row["removed_reads"], row["input_reads"]
+            )
+            self.assertGreater(row["input_reads"], 0)
+
+    def test_paired_end_stats_match_the_reads_actually_written(self):
+        # The paired path drops a mate whose partner was filtered out, so the
+        # count must come from what was written, not from what passed the filter
+        paired = CasavaOneEightSingleLanePerSampleDirFmt(
+            self.get_data_path("filter_reads/paired_end/"), mode="r"
+        )
+        obs_seqs, stats = filter_reads(
+            query=paired, index=self.minimap2_index, min_per_identity=0.99
+        )
+
+        frame = stats.to_dataframe()
+        for sample_id, row in frame.iterrows():
+            forward = os.path.join(
+                str(obs_seqs), f"{sample_id}_S01_L001_R1_001.fastq.gz"
+            )
+            matching = [
+                f
+                for f in os.listdir(str(obs_seqs))
+                if f.startswith(sample_id) and "R1" in f
+            ]
+            if not matching:
+                continue
+            forward = os.path.join(str(obs_seqs), matching[0])
+            with gzip.open(forward, "rt") as handle:
+                forward_reads = sum(1 for _ in handle) // 4
+            reverse = forward.replace("R1", "R2")
+            with gzip.open(reverse, "rt") as handle:
+                reverse_reads = sum(1 for _ in handle) // 4
+
+            self.assertEqual(row["retained_reads"], forward_reads + reverse_reads)
+
+    def test_keeping_mapped_and_unmapped_partitions_the_input(self):
+        # Every read is either kept as mapped or kept as unmapped, so the two
+        # runs must add up to the input
+        _, mapped = filter_reads(
+            query=self.query_single_reads, index=self.minimap2_index, keep="mapped"
+        )
+        _, unmapped = filter_reads(
+            query=self.query_single_reads, index=self.minimap2_index, keep="unmapped"
+        )
+
+        mapped_frame = mapped.to_dataframe()
+        unmapped_frame = unmapped.to_dataframe()
+        for sample_id, row in mapped_frame.iterrows():
+            self.assertEqual(
+                row["retained_reads"] + unmapped_frame.loc[sample_id]["retained_reads"],
+                row["input_reads"],
+            )
 
 
 if __name__ == "__main__":

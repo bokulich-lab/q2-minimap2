@@ -45,7 +45,20 @@ conda activate q2-minimap2-moshpit
 
     This method aligns long-read sequencing data (from a FASTA file) to a set of reference sequences, identifying sequences that match or do not match the reference within a specified identity percentage. The alignment is performed using Minimap2, and the results are processed using Samtools.
 
-5. **classify-consensus-minimap2**
+5. **align**
+
+    Align reads to a set of reference sequences and keep the alignment itself, rather than
+    only the reads it selects. Produces a coordinate-sorted BAM per sample
+    (`SampleData[AlignmentMap]`), which can be summarised with `alignment-stats` or handed
+    to any other tool that reads BAM.
+
+6. **alignment-stats**
+
+    Summarize Minimap2 alignments per sample: read counts, mapping rate, mapping quality
+    and reference coverage. The output is metadata, so it works directly with
+    `qiime metadata tabulate` and can be joined to a sample metadata file.
+
+7. **classify-consensus-minimap2**
 
     Assign taxonomy to query sequences using Minimap2. Performs alignment between query and reference reads, then assigns consensus taxonomy to each query sequence.
 
@@ -121,9 +134,37 @@ conda activate q2-minimap2-moshpit
 
 <br>
 
+* align
+  - Align reads and keep the BAM
+  ```shell
+  qiime minimap2 align --i-query single-end-reads.qza --i-index index.qza --o-alignment alignment.qza --verbose
+  ```
+  - Use every available core
+  ```shell
+  qiime minimap2 align --i-query single-end-reads.qza --i-index index.qza --p-n-threads auto --o-alignment alignment.qza
+  ```
+
+<br>
+
+* alignment-stats
+  - Summarize an alignment, then view it as a table
+  ```shell
+  qiime minimap2 alignment-stats --i-alignments alignment.qza --o-stats alignment-stats.qza
+  qiime metadata tabulate --m-input-file alignment-stats.qza --o-visualization alignment-stats.qzv
+  ```
+
+<br>
+
+* filter-reads also reports how many reads it removed per sample
+  ```shell
+  qiime minimap2 filter-reads --i-query single-end-reads.qza --i-index index.qza \
+    --o-filtered-query mapped_se.qza --o-filter-stats filter-stats.qza
+  ```
+
+<br>
+
 * classify-consensus-minimap2
   - Assign taxonomy to query sequences using Minimap2
   ```shell
   qiime minimap2 classify-consensus-minimap2 --i-query n1K_initial_reads_SILVA132.fna.qza --i-index ccm_index.qza --i-reference-taxonomy raw_taxonomy.qza --p-n-threads 8 --output-dir classification_output --verbose
   ```
-

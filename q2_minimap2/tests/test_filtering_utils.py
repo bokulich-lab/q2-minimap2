@@ -677,6 +677,15 @@ class TestProcessPairedSamFlagsEdgeCases(MinimapTestsBase):
             flag = int(record[1])
             self.assertTrue(bool(flag & 0x40) != bool(flag & 0x80))
 
+    def test_returns_the_number_of_records_actually_written(self):
+        # readB is an orphan: its partner was filtered out earlier, so it is
+        # dropped here and must not be counted as retained
+        self._write_sam([("readA", 0), ("readA", 0), ("readB", 0)])
+        written = process_paired_sam_flags(self.sam_file)
+
+        self.assertEqual(written, 2)
+        self.assertEqual(len(self._read_records()), 2)
+
     def test_record_carrying_both_pair_bits_does_not_displace_its_partner(self):
         # Flag 192 sets first- and second-in-pair at once, so it satisfies both
         # selections; the pair must not collapse onto that one record

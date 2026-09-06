@@ -11,6 +11,7 @@ import tempfile
 
 import pandas as pd
 from q2_types.feature_data import DNAFASTAFormat
+from qiime2.plugin import get_available_cores
 
 from q2_minimap2._filtering_utils import run_cmd
 from q2_minimap2.types._format import (
@@ -108,7 +109,7 @@ def minimap2_search(
     query: DNAFASTAFormat,
     index: Minimap2IndexDBDirFmt = None,
     reference: DNAFASTAFormat = None,
-    n_threads: int = 3,
+    n_threads: int = 1,
     preset: str = "map-ont",
     maxaccepts: int = 1,
     min_per_identity: float = None,
@@ -124,6 +125,10 @@ def minimap2_search(
     # Ensure that at least one of reference and index is provided
     if not reference and not index:
         raise ValueError("Either reference or index must be provided as input.")
+
+    # A thread count of 0 is what the Threads type passes on for "auto"
+    if n_threads == 0:
+        n_threads = get_available_cores()
 
     # Determine the reference or index path based on input
     idx_ref_path = str(index.path / "index.mmi") if index else str(reference.path)

@@ -10,6 +10,7 @@ import os
 import tempfile
 
 from q2_types.feature_data import DNAFASTAFormat
+from qiime2.plugin import get_available_cores
 
 from q2_minimap2._filtering_utils import (
     convert_to_fasta,
@@ -62,7 +63,7 @@ def extract_reads(
     sequences: DNAFASTAFormat,
     index: Minimap2IndexDBDirFmt = None,
     reference: DNAFASTAFormat = None,
-    n_threads: int = 3,
+    n_threads: int = 1,
     preset: str = "map-ont",
     extract: str = "mapped",
     min_per_identity: float = None,
@@ -77,6 +78,10 @@ def extract_reads(
             "Only one reference_reads or index_database artifact "
             "can be provided as input. Choose one and try again."
         )
+
+    # A thread count of 0 is what the Threads type passes on for "auto"
+    if n_threads == 0:
+        n_threads = get_available_cores()
 
     # Initialize directory format for filtered sequences
     filtered_seqs = DNAFASTAFormat()

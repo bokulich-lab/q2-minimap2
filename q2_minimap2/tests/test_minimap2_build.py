@@ -44,6 +44,16 @@ class TestMinimap2Build(MinimapTestsBase):
         mocked_run_command.assert_called_once()
 
     @patch("subprocess.run")
+    def test_build_lr_hq_preset(self, mocked_run_command):
+        build_index(self.genome, preset="lr:hq")
+        mocked_run_command.assert_called_once()
+
+    @patch("subprocess.run")
+    def test_build_asm20_preset(self, mocked_run_command):
+        build_index(self.genome, preset="asm20")
+        mocked_run_command.assert_called_once()
+
+    @patch("subprocess.run")
     def test_build_index_subprocess_failure(self, mocked_run_command):
         # Configuring the mock to raise a CalledProcessError
         mocked_run_command.side_effect = subprocess.CalledProcessError(
