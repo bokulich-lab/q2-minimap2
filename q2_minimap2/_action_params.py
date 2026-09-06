@@ -158,8 +158,9 @@ minimap2_search_outputs_dsc = {
 }
 minimap2_search_param_dsc = {
     "n_threads": "Number of threads to use.",
-    "maxaccepts": "Maximum number of hits to keep for each query. Minimap2 will "
-    "choose the first N hits in the reference database.",
+    "maxaccepts": "Maximum number of hits to keep for each query. When "
+    "min_per_identity is set, the identity filter is applied first, so this "
+    "keeps the top N of the hits that already satisfy it.",
     "preset": "The preset parameter applies multiple options at the same time "
     "during the mapping process of Minimap2. 1) map-ont: Align noisy long reads "
     "of ~10% error rate to a reference genome. 2) map-hifi: Align PacBio "
@@ -225,9 +226,9 @@ classify_consensus_minimap2_params = {
 classify_consensus_minimap2_param_dsc = {
     "n_threads": "Number of threads to use.",
     "maxaccepts": (
-        "Maximum number of hits to keep for each query. Minimap2 will "
-        "choose the first N hits in the reference database that "
-        "exceed perc_identity similarity to query."
+        "Maximum number of hits to keep for each query. The identity filter "
+        "is applied first, so this keeps the top N of the hits that already "
+        "satisfy min_per_identity."
     ),
     "preset": "The preset parameter applies multiple options at the same time "
     "during the mapping process of Minimap2. 1) map-ont: Align noisy long reads "

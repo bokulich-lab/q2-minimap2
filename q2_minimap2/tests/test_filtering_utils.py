@@ -407,11 +407,20 @@ class TestMakeMn2Cmd(MinimapTestsBase):
             "-E",
             "1",
             "input.fastq",
+            "--split-prefix",
+            "/tmp/split",
         ]
 
         # Call the function and compare the result with the expected command
         actual_cmd = make_mn2_cmd(
-            mapping_preset, index, n_threads, penalties, reads, None, samf_fp
+            mapping_preset,
+            index,
+            n_threads,
+            penalties,
+            reads,
+            None,
+            samf_fp,
+            "/tmp/split",
         )
         self.assertEqual(actual_cmd, expected_cmd)
 
@@ -477,8 +486,17 @@ class TestMakeMn2PairedEndCmd(MinimapTestsBase):
             reads2,
         ]
 
+        # Paired input deliberately omits --split-prefix: it would switch
+        # Minimap2 into fragment mode and change which reads align
         result_cmd = make_mn2_cmd(
-            mapping_preset, index, n_threads, penalties, reads1, reads2, samf_fp
+            mapping_preset,
+            index,
+            n_threads,
+            penalties,
+            reads1,
+            reads2,
+            samf_fp,
+            "/tmp/split",
         )
         self.assertEqual(result_cmd, expected_cmd)
 
@@ -554,13 +572,15 @@ class TestProcessPairedSamFlags(MinimapTestsBase):
         shutil.rmtree(self.temp_dir)
 
     def create_sam_file(self):
+        # Mates of a pair share a read name, which is what the collated SAM the
+        # function consumes actually looks like
         content = (
             "@HD\tVN:1.0\tSO:unsorted\n"
             "@SQ\tSN:chr1\tLN:248956422\n"
-            "read1\t4\tchr1\t100\t255\t50M\t*\t0\t0\t*\t*\n"
-            "read2\t4\tchr1\t150\t255\t50M\t*\t0\t0\t*\t*\n"
-            "read3\t0\tchr1\t200\t255\t50M\t*\t0\t0\t*\t*\n"
-            "read4\t0\tchr1\t250\t255\t50M\t*\t0\t0\t*\t*\n"
+            "readA\t4\tchr1\t100\t255\t50M\t*\t0\t0\t*\t*\n"
+            "readA\t4\tchr1\t150\t255\t50M\t*\t0\t0\t*\t*\n"
+            "readB\t0\tchr1\t200\t255\t50M\t*\t0\t0\t*\t*\n"
+            "readB\t0\tchr1\t250\t255\t50M\t*\t0\t0\t*\t*\n"
         )
         with open(self.sam_file, "w") as f:
             f.write(content)
@@ -573,16 +593,139 @@ class TestProcessPairedSamFlags(MinimapTestsBase):
         process_paired_sam_flags(self.sam_file)
         result = self.read_sam_file()
 
+        # Both mates of readA are unmapped, so each is also flagged
+        # mate-unmapped (0x8): 1+4+8+64 = 77 and 1+4+8+128 = 141.
+        # readB is mapped on both mates: 1+64 = 65 and 1+128 = 129.
         expected = [
             "@HD\tVN:1.0\tSO:unsorted\n",
             "@SQ\tSN:chr1\tLN:248956422\n",
-            "read1\t69\tchr1\t100\t255\t50M\t*\t0\t0\t*\t*\n",
-            "read2\t133\tchr1\t150\t255\t50M\t*\t0\t0\t*\t*\n",
-            "read3\t65\tchr1\t200\t255\t50M\t*\t0\t0\t*\t*\n",
-            "read4\t129\tchr1\t250\t255\t50M\t*\t0\t0\t*\t*\n",
+            "readA\t77\tchr1\t100\t255\t50M\t*\t0\t0\t*\t*\n",
+            "readA\t141\tchr1\t150\t255\t50M\t*\t0\t0\t*\t*\n",
+            "readB\t65\tchr1\t200\t255\t50M\t*\t0\t0\t*\t*\n",
+            "readB\t129\tchr1\t250\t255\t50M\t*\t0\t0\t*\t*\n",
         ]
 
         self.assertEqual(result, expected)
+
+
+class TestProcessPairedSamFlagsEdgeCases(MinimapTestsBase):
+    def setUp(self):
+        super().setUp()
+        self.temp_sam_dir = tempfile.mkdtemp()
+        self.sam_file = os.path.join(self.temp_sam_dir, "test.sam")
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_sam_dir)
+        super().tearDown()
+
+    def _write_sam(self, records):
+        header = "@HD\tVN:1.0\tSO:unsorted\n@SQ\tSN:chr1\tLN:1000\n"
+        body = "".join(
+            "\t".join(
+                [name, str(flag)]
+                + ["chr1", "100", "255", "50M", "*", "0", "0", "*", "*"]
+            )
+            + "\n"
+            for name, flag in records
+        )
+        with open(self.sam_file, "w") as file:
+            file.write(header + body)
+
+    def _read_records(self):
+        with open(self.sam_file) as file:
+            return [
+                line.rstrip("\n").split("\t")
+                for line in file
+                if not line.startswith("@")
+            ]
+
+    def test_orphaned_mate_is_dropped_without_error(self):
+        # Filtering can remove one mate of a pair; the survivor has nothing to
+        # be paired with, and must not take the next read's mate slot
+        self._write_sam([("readA", 0), ("readB", 0), ("readB", 0)])
+        process_paired_sam_flags(self.sam_file)
+        records = self._read_records()
+
+        self.assertEqual([record[0] for record in records], ["readB", "readB"])
+
+    def test_odd_record_count_does_not_raise(self):
+        # A lone trailing record used to be paired with an empty line
+        self._write_sam([("readA", 0)])
+        process_paired_sam_flags(self.sam_file)
+
+        self.assertEqual(self._read_records(), [])
+
+    def test_secondary_and_supplementary_records_are_dropped(self):
+        # These are extra alignments of a read its primary record already
+        # stands for, so keeping them would break the pairing
+        self._write_sam([("readA", 0), ("readA", 256), ("readA", 2048), ("readA", 0)])
+        process_paired_sam_flags(self.sam_file)
+        records = self._read_records()
+
+        self.assertEqual(len(records), 2)
+        self.assertEqual([record[1] for record in records], ["65", "129"])
+
+    def test_existing_mate_bits_are_not_doubled_up(self):
+        # Minimap2 already sets first/second in pair; OR-ing the other bit on
+        # top would mark a record as both, which samtools fastq discards
+        self._write_sam([("readA", 97), ("readA", 145)])
+        process_paired_sam_flags(self.sam_file)
+        records = self._read_records()
+
+        # Exactly one of the two mate bits must be set on each record
+        for record in records:
+            flag = int(record[1])
+            self.assertTrue(bool(flag & 0x40) != bool(flag & 0x80))
+
+    def test_record_carrying_both_pair_bits_does_not_displace_its_partner(self):
+        # Flag 192 sets first- and second-in-pair at once, so it satisfies both
+        # selections; the pair must not collapse onto that one record
+        self._write_sam([("readA", 192), ("readA", 0)])
+        process_paired_sam_flags(self.sam_file)
+        records = self._read_records()
+
+        self.assertEqual(len(records), 2)
+        first, second = records
+        self.assertTrue(int(first[1]) & 0x40)
+        self.assertTrue(int(second[1]) & 0x80)
+        self.assertIsNot(first, second)
+
+    def test_mates_are_ordered_by_their_pair_bits(self):
+        # The second-in-pair record appears first in the file here; the output
+        # must still put first-in-pair first
+        self._write_sam([("readA", 145), ("readA", 97)])
+        process_paired_sam_flags(self.sam_file)
+        records = self._read_records()
+
+        self.assertTrue(int(records[0][1]) & 0x40)
+        self.assertTrue(int(records[1][1]) & 0x80)
+
+
+class TestProcessSamFileSecondaryRecords(MinimapTestsBase):
+    def setUp(self):
+        super().setUp()
+        self.temp_sam_dir = tempfile.mkdtemp()
+        self.sam_file = os.path.join(self.temp_sam_dir, "test.sam")
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_sam_dir)
+        super().tearDown()
+
+    def test_unmapped_output_excludes_secondary_records(self):
+        # A secondary alignment of a mapped read must not be emitted as an
+        # extra copy of that read
+        with open(self.sam_file, "w") as file:
+            file.write("@HD\tVN:1.0\n")
+            file.write("readA\t0\tchr1\t100\t60\t50M\t*\t0\t0\t*\t*\n")
+            file.write("readA\t256\tchr1\t200\t0\t50M\t*\t0\t0\t*\t*\n")
+            file.write("readB\t4\t*\t0\t0\t*\t*\t0\t0\t*\t*\n")
+
+        process_sam_file(self.sam_file, "unmapped", None)
+
+        with open(self.sam_file) as file:
+            names = [line.split("\t")[0] for line in file if not line.startswith("@")]
+
+        self.assertEqual(names, ["readB"])
 
 
 if __name__ == "__main__":

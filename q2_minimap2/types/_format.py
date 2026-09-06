@@ -5,7 +5,49 @@
 #
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
+import pandas as pd
 from qiime2.plugin import ValidationError, model
+
+# Number of mandatory (non-tag) columns in a PAF record
+PAF_MANDATORY_FIELDS = 12
+
+# Columns holding identifiers or symbols that must stay verbatim strings
+PAF_STRING_COLUMNS = (0, 4, 5)
+
+
+# Read a PAF file into a DataFrame.
+# PAF records carry a variable number of trailing tag columns (a no-hit row has
+# 12-13, a secondary alignment 22, a primary alignment 23). pandas fixes the
+# column count from the first line and raises if a later line is wider, so the
+# widest row has to be found before parsing. A run with no alignments at all
+# leaves the file empty, which pandas also refuses to parse.
+def read_paf(paf_fp):
+    max_fields = 0
+    with open(paf_fp, "r") as file:
+        for line in file:
+            if line.strip():
+                max_fields = max(max_fields, line.count("\t") + 1)
+
+    if max_fields == 0:
+        return pd.DataFrame(columns=range(PAF_MANDATORY_FIELDS))
+
+    # Sequence identifiers are read verbatim: left to pandas, a reference named
+    # "NA" or "None" would become a missing value and one named "007" would
+    # turn into the number 7, neither of which can be matched back to the
+    # reference taxonomy.
+    return pd.read_csv(
+        paf_fp,
+        sep="\t",
+        header=None,
+        names=range(max_fields),
+        dtype={column: str for column in PAF_STRING_COLUMNS},
+        na_filter=False,
+    )
+
+
+# Leading bytes of a Minimap2 index, the same magic number Minimap2 itself
+# checks for before deciding whether a file is an index
+MM_IDX_MAGIC = b"MMI\x02"
 
 
 class Minimap2IndexDBFmt(model.BinaryFileFormat):
@@ -13,10 +55,18 @@ class Minimap2IndexDBFmt(model.BinaryFileFormat):
         super().__init__(*args, **kwargs)
 
     def _validate_(self, level):
-        # It's not clear if there is any way to tell if a Minimap2 index is
-        # correct or not.
-        # Minimap2 does have an inspect method
-        pass
+        # Handed a file that is not an index, Minimap2 silently falls back to
+        # reading it as FASTA and reports every query as unmapped, so the magic
+        # number is worth checking here rather than letting that surface as an
+        # empty result. Reading four bytes costs the same at either level.
+        with self.open() as file:
+            magic = file.read(len(MM_IDX_MAGIC))
+
+        if magic != MM_IDX_MAGIC:
+            raise ValidationError(
+                "File does not appear to be a Minimap2 index: expected it to "
+                f"start with {MM_IDX_MAGIC!r}, found {magic!r}."
+            )
 
 
 Minimap2IndexDBDirFmt = model.SingleFileDirectoryFormat(
@@ -25,10 +75,19 @@ Minimap2IndexDBDirFmt = model.SingleFileDirectoryFormat(
 
 
 class PairwiseAlignmentMN2Format(model.TextFileFormat):
+    # How many records to inspect per validation level. A PAF from a long-read
+    # run can hold millions of alignments, and QIIME asks for the "min" level
+    # on every view, so scanning the whole file each time is what the level is
+    # meant to avoid.
+    _record_count_map = {"min": 5, "max": None}
+
     def _validate(self, n_records=None):
         with open(str(self), "r") as file:
             line_number = 0
             for line in file:
+                if n_records is not None and line_number >= n_records:
+                    break
+
                 line_number += 1
                 fields = line.strip().split("\t")
 
@@ -87,7 +146,7 @@ class PairwiseAlignmentMN2Format(model.TextFileFormat):
                     )
 
     def _validate_(self, level):
-        self._validate()
+        self._validate(self._record_count_map[level])
 
 
 # A directory format for PAF files where each file ends with .paf and

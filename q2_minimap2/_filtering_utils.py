@@ -13,6 +13,15 @@ import tempfile
 
 from q2_minimap2._utils import run_command
 
+# SAM FLAG bits used when filtering and re-pairing alignment records
+PAIRED = 0x1
+UNMAPPED = 0x4
+MATE_UNMAPPED = 0x8
+FIRST_IN_PAIR = 0x40
+SECOND_IN_PAIR = 0x80
+SECONDARY = 0x100
+SUPPLEMENTARY = 0x800
+
 
 # Set Minimap2 alignment penalties based on provided parameters
 def set_penalties(
@@ -68,45 +77,60 @@ def get_alignment_length(cigar):
 # Function to process a SAM file, filter based on mappings and identity percentage
 def process_sam_file(input_sam_file, keep, min_per_identity):
     # Creates a temporary file and opens the input SAM file for reading simultaneously
-    with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp_file, open(
-        input_sam_file, "r"
-    ) as infile:
-        for line in infile:
-            # Writes header lines directly to the output file
-            if line.startswith("@"):
-                tmp_file.write(line)
-                continue
-
-            # Extract information from the line
-            parts = line.split("\t")
-            flag = int(parts[1])
-            cigar = parts[5]
-
-            # Calculates identity percentage for alignments with a valid CIGAR string
-            if min_per_identity and cigar != "*":
-                total_length = get_alignment_length(cigar)
-                identity_percentage = calculate_identity(line, total_length)
-            else:
-                # Defaults identity percentage to 100% if no CIGAR string or no
-                # min_per_identity specified
-                identity_percentage = 1
-
-            # Logic for including or excluding reads based on mappings and
-            # identity percentage
-            if keep == "mapped":
-                if not (flag & 0x4) and not (flag & 0x100):
-                    if not min_per_identity or identity_percentage >= min_per_identity:
-                        tmp_file.write(line)
-            else:
-                # Condition for keeping unmapped reads or mapped reads below the
-                # identity threshold
-                if (flag & 0x4) or (
-                    min_per_identity and identity_percentage < min_per_identity
-                ):
+    tmp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
+    try:
+        with tmp_file, open(input_sam_file, "r") as infile:
+            for line in infile:
+                # Writes header lines directly to the output file
+                if line.startswith("@"):
                     tmp_file.write(line)
+                    continue
 
-    # Replaces the original SAM file with the filtered temporary file
-    shutil.move(tmp_file.name, input_sam_file)
+                # Extract information from the line
+                parts = line.split("\t")
+                flag = int(parts[1])
+                cigar = parts[5]
+
+                # Identity percentage, for a valid CIGAR string
+                if min_per_identity and cigar != "*":
+                    total_length = get_alignment_length(cigar)
+                    identity_percentage = calculate_identity(line, total_length)
+                else:
+                    # Defaults identity percentage to 100% if no CIGAR string or no
+                    # min_per_identity specified
+                    identity_percentage = 1
+
+                # A secondary or supplementary record is an extra alignment of a
+                # read that its primary record already represents, so keeping it
+                # would emit the same read more than once
+                if flag & SECONDARY or flag & SUPPLEMENTARY:
+                    continue
+
+                # Logic for including or excluding reads based on mappings and
+                # identity percentage
+                if keep == "mapped":
+                    if not (flag & UNMAPPED):
+                        if (
+                            not min_per_identity
+                            or identity_percentage >= min_per_identity
+                        ):
+                            tmp_file.write(line)
+                else:
+                    # Condition for keeping unmapped reads or mapped reads below the
+                    # identity threshold
+                    if (flag & UNMAPPED) or (
+                        min_per_identity and identity_percentage < min_per_identity
+                    ):
+                        tmp_file.write(line)
+
+        # Replaces the original SAM file with the filtered temporary file
+        shutil.move(tmp_file.name, input_sam_file)
+    finally:
+        # A run that fails part-way through would otherwise leave behind a
+        # temporary copy of the SAM, which for a long-read run is as large as
+        # the input itself
+        if os.path.exists(tmp_file.name):
+            os.remove(tmp_file.name)
 
 
 # Generate samtools fasta convert command
@@ -147,7 +171,9 @@ def convert_to_fastq(_reads, n_threads, samfile_filepath, kind):
 
 
 # Generate Minimap2 mapping command
-def make_mn2_cmd(mapping_preset, index, n_threads, penalties, reads1, reads2, samf_fp):
+def make_mn2_cmd(
+    mapping_preset, index, n_threads, penalties, reads1, reads2, samf_fp, split_prefix
+):
     # align to reference with Minimap2
     minimap2_cmd = (
         [
@@ -167,6 +193,14 @@ def make_mn2_cmd(mapping_preset, index, n_threads, penalties, reads1, reads2, sa
 
     if reads2:
         minimap2_cmd.append(reads2)
+    else:
+        # A reference larger than the -I threshold produces a multi-part index,
+        # and without this Minimap2 emits no @SQ header lines and repeats every
+        # read once per part, which makes the samtools steps fail. Verified to
+        # leave single-part output byte-identical, so it is safe to pass always
+        # here. It is deliberately not passed for paired input: there it also
+        # switches Minimap2 into fragment mode, which changes which reads align.
+        minimap2_cmd += ["--split-prefix", str(split_prefix)]
 
     return minimap2_cmd
 
@@ -208,32 +242,97 @@ def collate_sam_inplace(input_sam_path):
     shutil.move(output_sam_path, input_sam_path)
 
 
+# Rewrite the flags of a single mate pair so that the samtools fastq command
+# recognises it. Minimap2 usually sets the first/second-in-pair bits itself, in
+# which case they are kept; they are only assigned from file order when absent.
+def set_pair_flags(read1, read2):
+    flag1, flag2 = int(read1[1]), int(read2[1])
+
+    # Clear the mate bits before setting them, so that a record which already
+    # carries one of them cannot end up flagged as both first and second in
+    # pair, which samtools fastq discards.
+    base1 = flag1 & ~(PAIRED | FIRST_IN_PAIR | SECOND_IN_PAIR | MATE_UNMAPPED)
+    base2 = flag2 & ~(PAIRED | FIRST_IN_PAIR | SECOND_IN_PAIR | MATE_UNMAPPED)
+
+    new1 = base1 | PAIRED | FIRST_IN_PAIR
+    new2 = base2 | PAIRED | SECOND_IN_PAIR
+
+    # Each mate records whether the other one is unmapped
+    if flag2 & UNMAPPED:
+        new1 |= MATE_UNMAPPED
+    if flag1 & UNMAPPED:
+        new2 |= MATE_UNMAPPED
+
+    read1[1], read2[1] = str(new1), str(new2)
+
+    return read1, read2
+
+
+# Order the two records of a pair, preferring the first/second-in-pair bits
+# Minimap2 set and falling back to the order they appear in the file.
+def order_mates(group):
+    first = [read for read in group if int(read[1]) & FIRST_IN_PAIR]
+    second = [read for read in group if int(read[1]) & SECOND_IN_PAIR]
+
+    # A record carrying both bits satisfies each selection, which would return
+    # it twice and silently drop its partner, so the two must be distinct
+    if len(first) == 1 and len(second) == 1 and first[0] is not second[0]:
+        return first[0], second[0]
+
+    return group[0], group[1]
+
+
+# Write out one group of records sharing a read name. Anything that is not
+# exactly a pair is dropped: a mate whose partner was removed by filtering has
+# nothing left for the samtools fastq command to pair it with.
+def write_mate_pair(temp_file, group):
+    if len(group) != 2:
+        return
+
+    read1, read2 = set_pair_flags(*order_mates(group))
+    temp_file.write("\t".join(read1) + "\n")
+    temp_file.write("\t".join(read2) + "\n")
+
+
 def process_paired_sam_flags(input_sam_path):
     """
     Process a SAM file containing paired-end reads to set specific flags for the read
-    pairs in order to be recognized py the samtools fastq command for paired end reads
+    pairs in order to be recognized py the samtools fastq command for paired end reads.
+
+    The file has already been name-collated, so all the records of a read name are
+    consecutive. Grouping by name instead of consuming two lines at a time keeps the
+    pairing correct when filtering has removed one mate, or when a read produced more
+    than the two records the pair consists of.
     """
-    with tempfile.NamedTemporaryFile(delete=False, mode="w") as temp_file:
-        with open(input_sam_path, "r") as infile:
+    temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
+    try:
+        with temp_file, open(input_sam_path, "r") as infile:
+            group, group_name = [], None
+
             for line in infile:
                 if line.startswith("@"):
                     temp_file.write(line)
                     continue
 
-                read1 = line.strip().split("\t")
-                read2 = infile.readline().strip().split("\t")
+                read = line.rstrip("\n").split("\t")
+                flag = int(read[1])
 
-                if int(read1[1]) == 4 and int(read2[1]) == 4:  # Both reads are unmapped
-                    read1[1] = "69"  # 1 + 4 + 64: Read is first in pair and unmapped
-                    read2[1] = "133"  # 1 + 4 + 128: Read is second in pair and unmapped
-                else:
-                    # Ensure paired flags
-                    # Add 1 and 64 (first read in a pair)
-                    read1[1] = str(int(read1[1]) | 1 | 64)
-                    # Add 1 and 128 (first read in a pair)
-                    read2[1] = str(int(read2[1]) | 1 | 128)
+                # A secondary or supplementary record is an additional alignment
+                # of a read that its primary record already stands for, so
+                # keeping it here would break the pairing
+                if flag & SECONDARY or flag & SUPPLEMENTARY:
+                    continue
 
-                temp_file.write("\t".join(read1) + "\n")
-                temp_file.write("\t".join(read2) + "\n")
+                if read[0] != group_name:
+                    write_mate_pair(temp_file, group)
+                    group, group_name = [], read[0]
 
-    shutil.move(temp_file.name, input_sam_path)
+                group.append(read)
+
+            write_mate_pair(temp_file, group)
+
+        shutil.move(temp_file.name, input_sam_path)
+    finally:
+        # Do not leave a full copy of the SAM behind if this fails part-way
+        if os.path.exists(temp_file.name):
+            os.remove(temp_file.name)

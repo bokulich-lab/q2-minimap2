@@ -6,6 +6,7 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import os
 import tempfile
 
 from q2_types.feature_data import DNAFASTAFormat
@@ -35,10 +36,17 @@ def _minimap2_extract_seqs(
     penalties,
 ):
 
-    with tempfile.NamedTemporaryFile() as sam_f:
+    with tempfile.NamedTemporaryFile() as sam_f, tempfile.TemporaryDirectory() as tmpd:
         # Use Minimap2 to find mapped and unmapped reads
         mn2_cmd = make_mn2_cmd(
-            preset, idx_path, n_threads, penalties, reads, None, sam_f.name
+            preset,
+            idx_path,
+            n_threads,
+            penalties,
+            reads,
+            None,
+            sam_f.name,
+            os.path.join(tmpd, "split"),
         )
         run_cmd(mn2_cmd, "Minimap2")
 

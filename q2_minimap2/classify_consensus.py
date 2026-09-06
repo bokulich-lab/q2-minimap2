@@ -16,13 +16,15 @@ def _PAF_format_df_to_series_of_lists(
     unassignable_label: str = "Unassigned",  # Label for indeterminate assignments
 ) -> pd.Series:
 
-    # Ensure all data in the assignments DataFrame are treated as strings for
-    # consistent comparison
-    assignments = assignments.astype(str)
+    # Only the query and subject identifier columns take part in the lookup, so
+    # converting those is enough; converting the whole frame would copy the
+    # CIGAR column, which is by far the largest, for nothing
+    query_ids = assignments[0].astype(str)
+    subject_ids = assignments[5].astype(str)
 
     # Identify missing IDs in the reference taxonomy that are present in the
     # assignments, excluding special cases ('*' for unassigned and empty strings).
-    missing_ids = set(assignments[5].values) - set(ref_taxa.index) - {"*", ""}
+    missing_ids = set(subject_ids.values) - set(ref_taxa.index) - {"*", ""}
     if len(missing_ids) > 0:
         # Raise an error if there are IDs found in assignments that aren't in the
         # reference taxonomy
@@ -34,22 +36,18 @@ def _PAF_format_df_to_series_of_lists(
         )
 
     # Assign a label to '*' (representing sequences without assignment) in the
-    # reference taxonomy
+    # reference taxonomy. This works on a copy so that the caller's taxonomy is
+    # left as it was.
+    ref_taxa = ref_taxa.copy()
     ref_taxa["*"] = unassignable_label
 
-    # Create a copy of the assignments DataFrame to manipulate and update with
-    # taxonomic labels
-    assignments_copy = assignments.copy(deep=True)
-    for index, value in assignments_copy.iterrows():
-        # Get the sequence ID for the current row
-        sseqid = assignments_copy.iloc[index][5]
-        # Update the assignment with its corresponding taxonomic label
-        assignments_copy.at[index, 5] = ref_taxa.at[sseqid]
+    # Replace every subject ID with its taxonomic label in one pass. Doing this
+    # row by row also meant indexing positionally with a label, which silently
+    # mis-assigned taxonomy for any caller whose frame was not indexed from 0.
+    taxa_hits: pd.Series = subject_ids.map(ref_taxa)
+    taxa_hits.index = query_ids
 
-    # Transform the updated assignments into a series where each index (accession ID)
-    # maps to a list of annotations (taxonomic labels)
-    # This groups all annotations for each unique accession ID together
-    taxa_hits: pd.Series = assignments_copy.set_index(0)[5]
+    # Group all annotations for each unique accession ID together
     taxa_hits = taxa_hits.groupby(taxa_hits.index).apply(list)
 
     return taxa_hits

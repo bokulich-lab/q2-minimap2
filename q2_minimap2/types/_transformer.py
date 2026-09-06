@@ -11,7 +11,7 @@ import os
 import pandas as pd
 
 from ..plugin_setup import plugin
-from ._format import PairwiseAlignmentMN2DirectoryFormat
+from ._format import PairwiseAlignmentMN2DirectoryFormat, read_paf
 
 
 @plugin.register_transformer
@@ -25,5 +25,4 @@ def _1(data: pd.DataFrame) -> PairwiseAlignmentMN2DirectoryFormat:
 
 @plugin.register_transformer
 def _2(data: PairwiseAlignmentMN2DirectoryFormat) -> pd.DataFrame:
-    file = pd.read_csv(os.path.join(str(data), "output.paf"), sep="\t", header=None)
-    return file
+    return read_paf(os.path.join(str(data), "output.paf"))

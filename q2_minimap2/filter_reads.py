@@ -38,11 +38,19 @@ def _minimap2_filter_reads(
     min_per_identity,  # Minimum percentage identity for a read to be included
     penalties,  # Scoring penalties for Minimap2 alignment
 ):
-    # Create a temporary file for SAM output from Minimap2
-    with tempfile.NamedTemporaryFile() as sam_f:
+    # Create a temporary file for SAM output from Minimap2, plus a scratch
+    # directory for the prefix Minimap2 needs to merge a multi-part index
+    with tempfile.NamedTemporaryFile() as sam_f, tempfile.TemporaryDirectory() as tmpd:
         # Construct and execute Minimap2 command for alignment
         mn2_cmd = make_mn2_cmd(
-            preset, idx_path, n_threads, penalties, reads1, reads2, sam_f.name
+            preset,
+            idx_path,
+            n_threads,
+            penalties,
+            reads1,
+            reads2,
+            sam_f.name,
+            os.path.join(tmpd, "split"),
         )
 
         run_cmd(mn2_cmd, "Minimap2")

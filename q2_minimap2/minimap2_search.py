@@ -6,11 +6,18 @@
 # The full license is in the file LICENSE, distributed with this software.
 # ----------------------------------------------------------------------------
 
+import os
+import tempfile
+
 import pandas as pd
 from q2_types.feature_data import DNAFASTAFormat
 
 from q2_minimap2._filtering_utils import run_cmd
-from q2_minimap2.types._format import Minimap2IndexDBDirFmt, PairwiseAlignmentMN2Format
+from q2_minimap2.types._format import (
+    Minimap2IndexDBDirFmt,
+    PairwiseAlignmentMN2Format,
+    read_paf,
+)
 
 
 # Filter a PAF file to keep only a certain number of entries
@@ -27,16 +34,23 @@ def filter_by_maxaccepts(df, maxaccepts):
 
 # Filter PAF entries based on a threshold of percentage identity
 def filter_by_perc_identity(df, perc_identity, output_no_hits):
-    # Filter mapped query entries based on identity score
+    # Filter mapped query entries based on identity score. No-hit rows have a
+    # block length of 0, so this division yields NaN for them and the
+    # comparison is False, which keeps them out of the mapped set.
     mapped_df = df[df[9] / df[10] >= perc_identity]
 
     if output_no_hits:
-        filtered_out = df[(df[9] / df[10] < perc_identity) | (df[10] == 0)]
+        # Only queries left without a single accepted alignment become no-hit
+        # rows. Selecting on the query name (column 0) keeps exactly one
+        # placeholder per query; de-duplicating on any other column would drop
+        # distinct queries that happen to share a value.
+        filtered_out = df[~df[0].isin(mapped_df[0])]
+        filtered_out = filtered_out.drop_duplicates(subset=0).copy()
 
-        # Keep only the first entry/row for each unique query
-        # that is filtered out, which signifies that we treat it
-        # as an unmapped query
-        filtered_out = filtered_out.drop_duplicates(subset=1)
+        # The strand and target name columns hold "*" in a no-hit row, so they
+        # have to accept strings even when every reference ID is numeric and
+        # pandas typed the column as an integer.
+        filtered_out[[4, 5]] = filtered_out[[4, 5]].astype(object)
 
         # Change paf file column entries that are filtered out
         # to indicate that are unmapped queries
@@ -53,7 +67,14 @@ def filter_by_perc_identity(df, perc_identity, output_no_hits):
 
 # Construct the command list for the Minimap2 alignment search
 def construct_command(
-    idx_ref_path, query_reads, n_threads, mapping_preset, paf_file_fp, output_no_hits
+    idx_ref_path,
+    query_reads,
+    n_threads,
+    mapping_preset,
+    paf_file_fp,
+    output_no_hits,
+    maxaccepts=1,
+    split_prefix=None,
 ):
     cmd = [
         "minimap2",
@@ -64,6 +85,15 @@ def construct_command(
         str(query_reads),
         "-t",
         str(n_threads),
+        # Minimap2 retains only 5 secondary alignments by default, which caps
+        # every query at 6 hits and makes any larger maxaccepts unreachable.
+        # Asking for maxaccepts secondaries leaves enough rows to filter down to.
+        "-N",
+        str(maxaccepts),
+        # Needed so a multi-part index still yields globally ranked hits rather
+        # than hits grouped per index part. No-op for a single-part index.
+        "--split-prefix",
+        str(split_prefix),
         "-o",
         str(paf_file_fp),
     ]
@@ -101,28 +131,35 @@ def minimap2_search(
     # Create a reference to a file with PAF format
     paf_file_fp = PairwiseAlignmentMN2Format()
 
-    # Construct the command
-    cmd = construct_command(
-        idx_ref_path,
-        query,
-        n_threads,
-        preset,
-        paf_file_fp,
-        output_no_hits,
-    )
+    with tempfile.TemporaryDirectory() as tmpd:
+        # Construct the command
+        cmd = construct_command(
+            idx_ref_path,
+            query,
+            n_threads,
+            preset,
+            paf_file_fp,
+            output_no_hits,
+            maxaccepts,
+            os.path.join(tmpd, "split"),
+        )
 
-    # Execute the Minimap2 alignment command
-    run_cmd(cmd, "Minimap2")
+        # Execute the Minimap2 alignment command
+        run_cmd(cmd, "Minimap2")
 
     # Read the PAF file as a pandas DataFrame
-    df = pd.read_csv(str(paf_file_fp), sep="\t", header=None)
+    df = read_paf(str(paf_file_fp))
+
+    # Optionally filter by perc_identity. This runs before the maxaccepts cut
+    # so that maxaccepts selects among the hits that actually pass the identity
+    # threshold, which is what the parameter description promises. Truncating
+    # first would discard qualifying hits in favour of higher-scoring ones that
+    # the threshold then rejects.
+    if min_per_identity is not None:
+        df = filter_by_perc_identity(df, min_per_identity, output_no_hits)
 
     # Filter the PAF file by maxaccepts (default = 1)
     df = filter_by_maxaccepts(df, maxaccepts)
-
-    # Optionally filter by perc_identity
-    if min_per_identity is not None:
-        df = filter_by_perc_identity(df, min_per_identity, output_no_hits)
 
     df.reset_index(drop=True, inplace=True)
 
