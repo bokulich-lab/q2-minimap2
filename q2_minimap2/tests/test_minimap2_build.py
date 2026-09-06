@@ -53,7 +53,7 @@ class TestMinimap2Build(MinimapTestsBase):
         # Calling the method under test
         with self.assertRaisesRegex(
             Exception,
-            "An error was encountered while running main.nf",
+            "An error was encountered while using Minimap2",
         ):
             build_index(self.genome)
 

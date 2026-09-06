@@ -73,7 +73,7 @@ plugin = Plugin(
     website="https://github.com/bokulich-lab/q2-minimap2",
     package="q2_minimap2",
     description="Plugin for sequence alignment using minimap2.",
-    short_description="",
+    short_description="Plugin for sequence alignment using minimap2.",
 )
 
 plugin.register_formats(
@@ -116,7 +116,7 @@ plugin.methods.register_function(
     output_descriptions=extract_reads_outputs_dsc,
     name="Filter long-read sequencing data (FeatureData).",
     description=extract_reads_dsc,
-    citations=[citations["Minimap2"]],
+    citations=[citations["Minimap2"], citations["li2009sequence"]],
 )
 
 plugin.methods.register_function(
@@ -129,7 +129,7 @@ plugin.methods.register_function(
     output_descriptions=filter_reads_outputs_dsc,
     name="Filter long-read sequencing data (SampleData).",
     description=filter_reads_dsc,
-    citations=[citations["Minimap2"]],
+    citations=[citations["Minimap2"], citations["li2009sequence"]],
 )
 
 plugin.methods.register_function(

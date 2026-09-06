@@ -166,9 +166,11 @@ minimap2_search_param_dsc = {
     "high-fidelity (HiFi) reads to a reference genome. 3) map-pb: Align "
     "older PacBio continuous long reads (CLR) to a reference genome. "
     "4) sr: Align short single-end reads.",
-    "min_per_identity": "After the alignment step, mapped reads will be "
-    "reclassified as unmapped if their identity percentage falls below this "
-    "value. If not set, there is no reclassification.",
+    "min_per_identity": "After the alignment step, mapped reads whose identity "
+    "percentage falls below this value are reclassified as unmapped and "
+    "reported as no-hit rows. When output_no_hits is False they are dropped "
+    "from the results entirely instead. If not set, there is no "
+    "reclassification.",
     "output_no_hits": "Report both matching and non-matching queries. "
     "WARNING: always use the default setting for this "
     "option unless if you know what you are doing! If "
@@ -176,7 +178,8 @@ minimap2_search_param_dsc = {
     "feature table will need to be filtered to exclude "
     "unclassified sequences, otherwise you may run into "
     "errors downstream from missing feature IDs. Set to "
-    "True to mirror default Minimap2 search.",
+    "False to mirror default Minimap2 search, which does "
+    "not report queries without a hit.",
 }
 minimap2_search_params = {
     "n_threads": Int % Range(1, None),
@@ -224,6 +227,7 @@ classify_consensus_minimap2_params = {
 }
 classify_consensus_minimap2_param_dsc = {
     "n_threads": "Number of threads to use.",
+    "output_no_hits": minimap2_search_param_dsc["output_no_hits"],
     "maxaccepts": (
         "Maximum number of hits to keep for each query. Minimap2 will "
         "choose the first N hits in the reference database that "

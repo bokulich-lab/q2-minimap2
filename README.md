@@ -7,24 +7,48 @@
 QIIME 2 plugin for sequence alignment using minimap2.
 
 ## Installation
-We provide two options for installing q2-minimap2 via conda environment files, depending on your preferred QIIME2 distribution:
+We provide conda environment files for several QIIME 2 distributions, under
+`environment-files/`. Pick the one matching the distribution and release you want:
 
 
-#### 1: Amplicon distribution
-Use the environment file `q2-minimap2-qiime2-amplicon-2025.10.yml` to create a new conda environment.
-
-```shell
-conda env create -f q2-minimap2-qiime2-amplicon-2025.10.yml
-conda activate q2-minimap2-amplicon
-```
-
-#### 2: Moshpit distribution
-Use the environment file `q2-minimap2-qiime2-moshpit-2025.10.yml` to create a new conda environment based on the MOSHPIT distro. 
+#### 1: Unified QIIME 2 distribution (2026.7 and newer)
 
 ```shell
-conda env create -f q2-minimap2-qiime2-moshpit-2025.10.yml
-conda activate q2-minimap2-moshpit
+conda env create -f environment-files/q2-minimap2-rachis-qiime2-2026.7.yml
+conda activate q2-minimap2-qiime2-2026.7
 ```
+
+#### 2: Amplicon distribution
+
+```shell
+conda env create -f environment-files/q2-minimap2-rachis-amplicon-2026.4.yml
+conda activate q2-minimap2-amplicon-2026.4
+```
+
+#### 3: MOSHPIT distribution
+
+```shell
+conda env create -f environment-files/q2-minimap2-rachis-moshpit-2026.4.yml
+conda activate q2-minimap2-moshpit-2026.4
+```
+
+Environment files for earlier releases (2025.10, 2026.1) are in the same directory. Each
+file declares its own environment name, which drops the distribution-family segment from
+the file name — `q2-minimap2-qiime2-amplicon-2025.10.yml` creates `q2-minimap2-amplicon-2025.10`.
+Run `grep '^name:' environment-files/*.yml` to see them all.
+
+### Development
+
+To work on the plugin itself, create an environment as above, then install your checkout
+in editable mode and pull in the test dependencies:
+
+```shell
+make dev
+pip install pytest pytest-cov pytest-xdist
+pre-commit install
+```
+
+Run the tests with `make test`, or `make test-cov` for a coverage report.
 
 ## Provided Actions
 
@@ -126,4 +150,3 @@ conda activate q2-minimap2-moshpit
   ```shell
   qiime minimap2 classify-consensus-minimap2 --i-query n1K_initial_reads_SILVA132.fna.qza --i-index ccm_index.qza --i-reference-taxonomy raw_taxonomy.qza --p-n-threads 8 --output-dir classification_output --verbose
   ```
-
